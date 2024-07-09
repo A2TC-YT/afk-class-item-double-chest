@@ -529,7 +529,7 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
-            PreciseSleep(2300)
+            PreciseSleep(2250)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 450)
@@ -602,8 +602,8 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             Send, % "{" key_binds["jump"] " Up}"
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
-            DllCall("mouse_event", uint, 1, int, -400, int, 400)
-            PreciseSleep(1300)
+            DllCall("mouse_event", uint, 1, int, -380, int, 400)
+            PreciseSleep(1250)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
@@ -679,7 +679,7 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
-            PreciseSleep(2270)
+            PreciseSleep(2230)
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
