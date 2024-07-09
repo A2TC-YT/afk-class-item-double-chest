@@ -169,7 +169,7 @@ return
 ; =================================== ;
 
 ; hotkey to help make menuing while devving
-F2::get_mouse_pos_relative_to_d2()
+; F2::get_mouse_pos_relative_to_d2()
 
 F3:: ; main hotkey that runs the script
 {
@@ -339,7 +339,7 @@ F5:: ; same thing but close the script
 
 force_first_chest() ; walk to the corner to guarantee chest 21 spawns, also calls find_chests to, yknow, find teh chests :P
 {
-    DllCall("mouse_event", uint, 1, int, 9090, int, 0)
+    DllCall("mouse_event", uint, 1, int, 9091, int, 0)
     Sleep, 100
     DllCall("mouse_event", uint, 1, int, -840, int, 0)
     Send, % "{" key_binds["move_forward"] " Down}"
@@ -807,7 +807,7 @@ reload_landing() ; in the name innit
         Sleep, 1400
         d2_click(20, 381, 0)
         PreciseSleep(850)
-        d2_click(260, 347, 0)
+        d2_click(260, 338, 0)
         Sleep, 100
         Send, {LButton Down}
         Sleep, 1100
@@ -817,6 +817,15 @@ reload_landing() ; in the name innit
         percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
         if (percent_white >= 0.3)
         {
+            d2_click(293, 338, 0) ; try clicking a bit to the side
+            Sleep, 100
+            Send, {LButton Down}
+            Sleep, 1100
+            Send, {LButton Up}
+            Sleep, 1000
+            percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
+            if (percent_white >= 0.3)
+                return
             Send, % "{" key_binds["ui_open_director"] "}"
             Sleep, 2000
             continue ; close map and retry the whole function
@@ -838,22 +847,29 @@ orbit_landing() ; loads into the landing from orbit
         Sleep, 1800
         d2_click(20, 381, 0)
         PreciseSleep(850)
-        d2_click(260, 347, 0)
+        d2_click(260, 338, 0)
         Sleep, 100
-        d2_click(260, 347)
+        d2_click(260, 338)
         Sleep, 1500
+        percent_white := simpleColorCheck("33|573|24|24", 24, 24)
+        if (!percent_white >= 0.4) ; we missed the landing zone
+        {
+            d2_click(293, 338, 0) ; try clicking a bit to the side
+            Sleep, 100
+            d2_click(295, 338)
+            Sleep, 1500
+            percent_white := simpleColorCheck("33|573|24|24", 24, 24) ; check again, if still not in the right screen, close map and try again
+            if (!percent_white >= 0.4)
+            {
+                Send, % "{" key_binds["ui_open_director"] "}"
+                Sleep, 1500
+                Continue
+            }
+        }
         d2_click(1080, 601, 0)
         Sleep, 100
         d2_click(1080, 601)
-        percent_white := simpleColorCheck("57|29|24|24", 24, 24)
-        if (percent_white >= 0.25) ; we missed the map icon, redo it
-        {
-            Send, % "{" key_binds["ui_open_director"] "}"
-            Sleep, 1500
-            Continue
-        }
-        else 
-            return true
+        return true
     }
     return false ; 5 fuckups in a row and it fails
 }
