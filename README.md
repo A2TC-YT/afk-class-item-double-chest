@@ -56,7 +56,7 @@ If you are interested in learning more about how this macro works or about simil
    - Make sure you have [AutoHotkey](https://www.autohotkey.com/) installed on your computer. If you don't have it, download and install it from the official website.
 
 2. **Download the Latest Release**
-   - Download the latest release of the macro from the [releases page](link-to-releases-page). Once downloaded, unzip the file to a folder of your choice.
+   - Download the latest release of the macro from the [releases page](https://github.com/A2TC-YT/afk-class-item-double-chest/releases/tag/1.0). Once downloaded, unzip the file to a folder of your choice.
 
 3. **Ensure Settings Match**
    - Before running the macro, ensure all your settings match the ones listed in the "Required Settings" section above. This includes sensitivity, bindings, display settings, and additional settings.
