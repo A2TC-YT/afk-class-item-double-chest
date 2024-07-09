@@ -26,6 +26,7 @@ If you are interested in learning more about how this macro works or about simil
 ### Display Settings
 - **Window Mode**: Windowed
 - **Resolution**: 1280 x 720
+- **Frame Rate Cap Enabled**: `On`
 - **Frame Rate Cap**: 30 FPS
 - **Brightness**: Set to `7`
 - **Screen Bounds**: Ensure screen bounds are set to max
