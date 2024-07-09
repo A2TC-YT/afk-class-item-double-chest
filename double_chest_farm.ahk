@@ -824,8 +824,8 @@ reload_landing() ; in the name innit
             Send, {LButton Up}
             Sleep, 1000
             percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
-            if (percent_white >= 0.3)
-                return
+            if (!percent_white >= 0.3) ; we clicked succesfully
+                break
             Send, % "{" key_binds["ui_open_director"] "}"
             Sleep, 2000
             continue ; close map and retry the whole function
