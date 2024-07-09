@@ -48,5 +48,25 @@ If you are interested in learning more about how this macro works or about simil
 ![Additional Settings](images/chest_farm_aachen.png)
 ![Additional Settings](images/chest_farm_ghost_mod.png)
 
+## How to Use
+
+1. **Install AutoHotkey**
+   - Make sure you have [AutoHotkey](https://www.autohotkey.com/) installed on your computer. If you don't have it, download and install it from the official website.
+
+2. **Download the Latest Release**
+   - Download the latest release of the macro from the [releases page](link-to-releases-page). Once downloaded, unzip the file to a location of your choice.
+
+3. **Ensure Settings Match**
+   - Before running the macro, ensure all your settings match the ones listed in the "Required Settings" section above. This includes sensitivity, bindings, display settings, and additional settings.
+
+4. **Run the Macro**
+   - Navigate to the unzipped folder and run the `chest_farm.ahk` file by double-clicking it.
+
+5. **Keybinds**
+   - Use the following keybinds to control the macro:
+     - **Start Macro**: Press `F3`
+     - **Stop Macro**: Press `F4`
+     - **Close Macro**: Press `F5`
+
 ## Support
 - for any additional support or to ask any questions join the [discord](https://discord.gg/KGyjysA5WY)
