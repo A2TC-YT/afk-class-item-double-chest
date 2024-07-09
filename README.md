@@ -36,9 +36,10 @@ If you are interested in learning more about how this macro works or about simil
 - **HDR**: Disabled
 - **Chromatic Aberration**: Disabled
 - **Film Grain**: Disabled
+![Visual Settings](images/chest_farm_additional_video.png)
 - **HUD Opacity**: Set to `Full`
 - **Colorblind Mode**: Disabled
-![Visual Settings](images/chest_farm_additional_video.png)
+![Visual Settings](images/chest_farm_gameplay.png)
 
 ## Character Requirements
 - **100 Mobility**: Yes, on every class (even warlock)
@@ -55,13 +56,14 @@ If you are interested in learning more about how this macro works or about simil
    - Make sure you have [AutoHotkey](https://www.autohotkey.com/) installed on your computer. If you don't have it, download and install it from the official website.
 
 2. **Download the Latest Release**
-   - Download the latest release of the macro from the [releases page](link-to-releases-page). Once downloaded, unzip the file to a location of your choice.
+   - Download the latest release of the macro from the [releases page](link-to-releases-page). Once downloaded, unzip the file to a folder of your choice.
 
 3. **Ensure Settings Match**
    - Before running the macro, ensure all your settings match the ones listed in the "Required Settings" section above. This includes sensitivity, bindings, display settings, and additional settings.
 
 4. **Run the Macro**
    - Navigate to the unzipped folder and run the `chest_farm.ahk` file by double-clicking it.
+   - If the UI for the stats is off the screen you can move the Destiny window and press F4 to reload the script.
 
 5. **Keybinds**
    - Use the following keybinds to control the macro:
