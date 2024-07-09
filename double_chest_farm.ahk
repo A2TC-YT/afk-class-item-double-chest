@@ -12,6 +12,7 @@ pToken := Gdip_Startup()
 
 global GUARDIAN := 2 ; position on the character select screen
 global CHARACTER_TYPE := "warlock" ; can be "hunter", "titan", or "warlock"
+global AACHEN_CHOICE := "kinetic"
 ; will be coordinates of destinys client area (actual game window not including borders)
 global DESTINY_X := 0
 global DESTINY_Y := 0
@@ -33,6 +34,8 @@ Gui, user_input: Add, Text,, Select Class:
 Gui, user_input: Add, DropDownList, vClassChoice, hunter||warlock ; |titan
 Gui, user_input: Add, Text,, Select Position:`n(on character select)
 Gui, user_input: Add, DropDownList, vPositionChoice, top||middle|bottom
+Gui, user_input: Add, Text,, Which Aachen do you have:
+Gui, user_input: Add, DropDownList, vAachenChoice, kinetic||void
 Gui, user_input: Add, Button, guser_input_OK Default, OK
 Gui, user_input: Show
 
@@ -139,6 +142,7 @@ Gui, user_input: Show
 keys_we_press := [
     ,"hold_zoom"
     ,"primary_weapon"
+    ,"special_weapon"
     ,"move_forward"
     ,"move_backward"
     ,"move_left"
@@ -208,8 +212,12 @@ F3:: ; main hotkey that runs the script
             }
             WinActivate, ahk_exe destiny2.exe ; really make sure we are tabbed in
             info_ui.update_content("Waiting for chest spawns")
-            Sleep, 1500
-            Send, % "{" key_binds["primary_weapon"] "}" ; make sure aachen is equipped
+            Sleep, 1000
+            if (AACHEN_CHOICE == "kinetic")
+                Send, % "{" key_binds["primary_weapon"] "}" ; make sure aachen is equipped
+            else 
+                Send, % "{" key_binds["special_weapon"] "}"
+            Sleep, 1000
             chest_spawns := force_first_chest() ; go to first corner and get chest spawns
             if (!chest_spawns[1]) ; if no first chest we relaunch
             {
@@ -464,7 +472,7 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     Send, % "{" key_binds["move_backward"] " Up}"
     PreciseSleep(100)
     Send, % "{" key_binds["move_right"] " Down}"
-    PreciseSleep(243)
+    PreciseSleep(235)
     Send, % "{" key_binds["move_right"] " Up}"
     PreciseSleep(300)
     DllCall("mouse_event", uint, 1, int, 530, int, 0)
@@ -1241,6 +1249,7 @@ get_d2_keybinds(k) ; very readable function that parses destiny 2 cvars file for
     user_input_OK:
         Gui, user_input: Submit
         CHARACTER_TYPE := ClassChoice
+        AACHEN_CHOICE := AachenChoice
         ; GUARDIAN = 1 if positionchoice is top, 2 if middle, and 3 if bottom
         if (PositionChoice == "top")
             GUARDIAN := 1
