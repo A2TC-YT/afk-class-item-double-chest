@@ -169,7 +169,7 @@ return
 ; =================================== ;
 
 ; hotkey to help make menuing while devving
-; F2::get_mouse_pos_relative_to_d2()
+F2::get_mouse_pos_relative_to_d2()
 
 F3:: ; main hotkey that runs the script
 {
@@ -219,7 +219,7 @@ F3:: ; main hotkey that runs the script
                 CURRENT_RUNS++
                 total_runs_ui.update_content("Runs: " TOTAL_RUNS+CURRENT_RUNS)
                 current_runs_ui.update_content("Runs - " CURRENT_RUNS)
-                total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - (TOTAL_CHESTS+CURRENT_CHESTS)/(TOTAL_RUNS+CURRENT_RUNS)*2*100, 2) "%")
+                total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS+CURRENT_CHESTS)/((TOTAL_RUNS+CURRENT_RUNS)*2))*100, 2) "%")
                 current_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - (CURRENT_CHESTS/(CURRENT_RUNS*2))*100, 2) "%")
                 continue
             }
@@ -283,14 +283,6 @@ F3:: ; main hotkey that runs the script
     return
 }
 
-; hotkey i use to test random shit
-; F6::
-; {
-;     percent_white := simpleColorCheck("629|365|23|19", 23, 19)
-;     MsgBox, % percent_white
-;     return
-; }
-
 *F4:: ; reload the script, release any possible held keys, save stats
 {
     for key, value in key_binds 
@@ -334,6 +326,13 @@ F5:: ; same thing but close the script
     }
     ExitApp
 }
+
+; hotkey i use to test random shit
+; F6::
+; {
+;     orbit_landing()
+;     return
+; }
 
 ; in game functions
 ; =================================== ;
@@ -806,9 +805,9 @@ reload_landing() ; in the name innit
     {   
         Send, % "{" key_binds["ui_open_director"] "}"
         Sleep, 1400
-        d2_click(0, 381, 0)
-        PreciseSleep(1000)
-        d2_click(444, 347, 0)
+        d2_click(20, 381, 0)
+        PreciseSleep(850)
+        d2_click(260, 347, 0)
         Sleep, 100
         Send, {LButton Down}
         Sleep, 1100
@@ -818,16 +817,6 @@ reload_landing() ; in the name innit
         percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
         if (percent_white >= 0.3)
         {
-            d2_click(472, 347, 0) ; try just moving the mouse a lil to the right, this seems to be the most common fuck up
-            Sleep, 100
-            Send, {LButton Down}
-            Sleep, 1100
-            Send, {LButton Up}
-            Sleep, 1000
-            ; check if we are still on the map screen
-            percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
-            if (!(percent_white >= 0.3)) ; if not on map then we gucci
-                break
             Send, % "{" key_binds["ui_open_director"] "}"
             Sleep, 2000
             continue ; close map and retry the whole function
@@ -847,11 +836,11 @@ orbit_landing() ; loads into the landing from orbit
         Sleep, 500
         d2_click(640, 360)
         Sleep, 1800
-        d2_click(0, 381, 0)
-        PreciseSleep(1000)
-        d2_click(444, 347, 0)
+        d2_click(20, 381, 0)
+        PreciseSleep(850)
+        d2_click(260, 347, 0)
         Sleep, 100
-        d2_click(444, 347)
+        d2_click(260, 347)
         Sleep, 1500
         d2_click(1080, 601, 0)
         Sleep, 100
