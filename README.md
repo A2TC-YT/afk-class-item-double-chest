@@ -39,6 +39,7 @@ If you are interested in learning more about how this macro works or about simil
 ![Visual Settings](images/chest_farm_additional_video.png)
 - **HUD Opacity**: Set to `Full`
 - **Colorblind Mode**: Disabled
+- **Reticle Location**: Center
 ![Visual Settings](images/chest_farm_gameplay.png)
 
 ## Character Requirements
