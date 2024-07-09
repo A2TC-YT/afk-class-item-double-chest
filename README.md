@@ -62,7 +62,7 @@ If you are interested in learning more about how this macro works or about simil
    - Before running the macro, ensure all your settings match the ones listed in the "Required Settings" section above. This includes sensitivity, bindings, display settings, and additional settings.
 
 4. **Run the Macro**
-   - Navigate to the unzipped folder and run the `chest_farm.ahk` file by double-clicking it.
+   - Navigate to the unzipped folder and run the `double_chest_farm.ahk` file by double-clicking it.
    - If the UI for the stats is off the screen you can move the Destiny window and press F4 to reload the script.
 
 5. **Keybinds**
