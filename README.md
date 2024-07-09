@@ -43,6 +43,7 @@ If you are interested in learning more about how this macro works or about simil
 
 ## Character Requirements
 - **100 Mobility**: Yes, on every class (even warlock)
+- **Jump**: Warlock - Burst Glide | Hunter - Triple Jump | Titan - Catapult Lift
 - **No Movement Exotics**: No ST0MP-EE5, no TRANSVERSIVE STEPS, etc.
 - **Weapon**: Get and equip the **kinetic** blue rarity sniper AACHEN-LR2 from collections
 - **Ghost Mod**: You must equip the `Wombo Detector` ghost mod (alternatively the `Expert Tracker` and `Treasure Hunter` ghost mods will actually work better but are no longer obtainable)
