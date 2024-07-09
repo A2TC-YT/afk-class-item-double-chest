@@ -69,4 +69,5 @@ If you are interested in learning more about how this macro works or about simil
      - **Close Macro**: Press `F5`
 
 ## Support
-- for any additional support or to ask any questions join the [discord](https://discord.gg/KGyjysA5WY)
+- For any additional support or to ask any questions join the [discord](https://discord.gg/KGyjysA5WY)
+- And if you wanna support me you can [here :3](https://ko-fi.com/a2tc_awesome_guy)
