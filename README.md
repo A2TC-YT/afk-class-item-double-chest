@@ -45,7 +45,7 @@ If you are interested in learning more about how this macro works or about simil
 - **100 Mobility**: Yes, on every class (even warlock)
 - **No Movement Exotics**: No ST0MP-EE5, no TRANSVERSIVE STEPS, etc.
 - **Weapon**: Get and equip the **kinetic** blue rarity sniper AACHEN-LR2 from collections
-- **Ghost Mod**: You mest equip the `Wombo Detector` ghost mod (alternatively the `Expert Tracker` and `Treasure Hunter` ghost mods will actually work better but are no longer obtainable)
+- **Ghost Mod**: You must equip the `Wombo Detector` ghost mod (alternatively the `Expert Tracker` and `Treasure Hunter` ghost mods will actually work better but are no longer obtainable)
 ![Additional Settings](images/chest_farm_mobi.png)
 ![Additional Settings](images/chest_farm_aachen.png)
 ![Additional Settings](images/chest_farm_ghost_mod.png)
