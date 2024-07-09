@@ -338,9 +338,17 @@ F5:: ; same thing but close the script
 ; =================================== ;
 
 force_first_chest() ; walk to the corner to guarantee chest 21 spawns, also calls find_chests to, yknow, find teh chests :P
-{
-    DllCall("mouse_event", uint, 1, int, 9091, int, 0)
-    Sleep, 100
+{   
+    WinActivate, ahk_exe destiny2.exe
+    Sleep, 20
+    DllCall("mouse_event", uint, 1, int, 9091, int, 0) ; do 2 360s because yeah
+    Sleep, 10
+    DllCall("mouse_event", uint, 1, int, -9091, int, 0)
+    Sleep, 10
+    Send, % "{" key_binds["hold_zoom"] " Down}"
+    Sleep, 50
+    Send, % "{" key_binds["hold_zoom"] " Up}"
+    Sleep, 140
     DllCall("mouse_event", uint, 1, int, -840, int, 0)
     Send, % "{" key_binds["move_forward"] " Down}"
     Send, % "{" key_binds["toggle_sprint"] " Down}"
@@ -359,7 +367,7 @@ force_first_chest() ; walk to the corner to guarantee chest 21 spawns, also call
 find_chests() ; figures out which chest in group 4 is spawned and also waits for chest 21 to spawn
 {
     ; group 5 is chests 21,22, 23, 24, 25
-    ; group 5 is chests 16, 17, 18, 19, 20
+    ; group 4 is chests 16, 17, 18, 19, 20
     ; group 3 is chests 11, 12, 13, 14, 15 (probably wont be used)
     ; group 2 is chests 6, 7, 8, 9, 10 (probably wont be used)
     ; group 1 is chests 1, 2, 3, 4, 5 (probably wont be used)
@@ -456,7 +464,7 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     Send, % "{" key_binds["move_backward"] " Up}"
     PreciseSleep(100)
     Send, % "{" key_binds["move_right"] " Down}"
-    PreciseSleep(255)
+    PreciseSleep(243)
     Send, % "{" key_binds["move_right"] " Up}"
     PreciseSleep(300)
     DllCall("mouse_event", uint, 1, int, 530, int, 0)
@@ -528,10 +536,10 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
-            PreciseSleep(2250)
+            PreciseSleep(2210)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             Send, % "{" key_binds["move_forward"] " Up}"
-            DllCall("mouse_event", uint, 1, int, 130, int, 450)
+            DllCall("mouse_event", uint, 1, int, 130, int, 500)
             PreciseSleep(1100)
             Send, % "{" key_binds["interact"] " Up}"
         }
