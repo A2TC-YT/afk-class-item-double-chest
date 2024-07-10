@@ -31,7 +31,7 @@ if(IsAdminProcess(D2PID)) {
 OVERLAY_OFFSET_X := DESTINY_X
 OVERLAY_OFFSET_Y := DESTINY_Y
 
-if (DESTINY_WIDTH != 1280 || DESTINY_HEIGHT != 720) ; make sure they are actually on windowed mode :D
+if (DESTINY_WIDTH > 1280 || DESTINY_HEIGHT > 720) ; make sure they are actually on windowed mode :D
 {
     MsgBox, % "This script is only designed to work with the game in windowed and a resolution of 1280x720. Your resolution is " DESTINY_WIDTH "x" DESTINY_HEIGHT "."
     ExitApp
@@ -281,7 +281,7 @@ F3:: ; main hotkey that runs the script
             current_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - (CURRENT_CHESTS/(CURRENT_RUNS*2))*100, 2) "%")
             EXOTIC_DROP := false
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
-            if (remaining_chests <= 0)
+            if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
                 break
         }
         info_ui.update_content("Orbit and relaunch") ; opened 40 chests, time to orbit and relaunch
