@@ -4,10 +4,21 @@ global overlay_var
 
 overlayToken := Gdip_Startup()
 
+global OVERLAY_OFFSET_X := 0
+global OVERLAY_OFFSET_Y := 0
+
+; Get the DPI scaling factor
+global dpiScaling := GetDPIScaling()
+; Adjust the scaling factor if necessary
+global dpiInverse := 1 / dpiScaling
+
 class Overlay
 {
     __New(name, content, x_pos, y_pos, font_num:=3, font_size:=16, is_bold:=0, text_color:="White", has_background:=false, background_color:="Black", round_corners:=0)
     {
+        x_pos := OVERLAY_OFFSET_X + x_pos
+        y_pos := OVERLAY_OFFSET_Y + y_pos
+        font_size := font_size * dpiInverse
         this.name := name
         this.content := content
         this.x_pos := x_pos
@@ -459,4 +470,14 @@ Class LOGFONT{
 		return "-" RegExReplace(this.FaceName, "[^a-zA-Z ]") "-`n" LONG "`n" BYTE
 	}
 	
+}
+
+; Function to get the DPI scaling factor
+GetDPIScaling() {
+    hDC := DllCall("GetDC", "Ptr", 0, "Ptr")
+    if !hDC
+        return
+    dpiX := DllCall("GetDeviceCaps", "Ptr", hDC, "Int", 88)  ; 88 is the index for LOGPIXELSX
+    DllCall("ReleaseDC", "Ptr", 0, "Ptr", hDC)
+    return dpiX / 96.0  ; 96 is the default DPI
 }
