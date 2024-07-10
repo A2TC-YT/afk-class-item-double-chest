@@ -21,6 +21,13 @@ global DESTINY_HEIGHT := 0
 
 find_d2()
 
+WinGet, D2PID, PID, ahk_class Tiger D3D Window
+if(IsAdminProcess(D2PID)) {
+    if not A_IsAdmin {
+        Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
+    }
+}
+
 OVERLAY_OFFSET_X := DESTINY_X
 OVERLAY_OFFSET_Y := DESTINY_Y
 
@@ -1244,6 +1251,28 @@ get_d2_keybinds(k) ; very readable function that parses destiny 2 cvars file for
     for _, n in k 
         RegExMatch(f, "<cvar\s+name=""`" n `"""\s+value=""([^""]+)""", m) ? b[n] := t.HasKey(k2 := StrReplace((k1 := StrSplit(m1, "!")[1]) != "unused" ? k1 : k1[2], " ", "")) ? t[k2] : k2 : b[n] := "unused"
     return b
+}
+
+IsAdminProcess(pid) {
+    hProcess := DllCall("OpenProcess", "UInt", 0x1000, "Int", False, "UInt", pid, "Ptr")
+    if (!hProcess)
+        return False
+    if !DllCall("Advapi32.dll\OpenProcessToken", "Ptr", hProcess, "UInt", 0x0008, "PtrP", hToken)
+    {
+        DllCall("CloseHandle", "Ptr", hProcess)
+        return False
+    }
+    VarSetCapacity(TOKEN_ELEVATION, 4, 0)
+    cbSize := 4
+    if !DllCall("Advapi32.dll\GetTokenInformation", "Ptr", hToken, "UInt", 20, "Ptr", &TOKEN_ELEVATION, "UInt", cbSize, "UIntP", cbSize)
+    {
+        DllCall("CloseHandle", "Ptr", hToken)
+        DllCall("CloseHandle", "Ptr", hProcess)
+        return False
+    }
+    DllCall("CloseHandle", "Ptr", hToken)
+    DllCall("CloseHandle", "Ptr", hProcess)
+    return NumGet(TOKEN_ELEVATION, 0) != 0
 }
 
 ; user input gui 
