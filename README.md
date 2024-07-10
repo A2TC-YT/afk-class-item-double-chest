@@ -15,6 +15,7 @@ If you are interested in learning more about how this macro works or about simil
 ### Sensitivity
 - **Look Sensitivity**: Set to `6`
 - **ADS Sensitivity Modifier**: Set to `1.0`
+- **Aim Smoothing**: Off
 ![Sensitivity](images/chest_farm_sens.png)
 
 ### Bindings
@@ -28,6 +29,7 @@ If you are interested in learning more about how this macro works or about simil
 - **Resolution**: 1280 x 720
 - **Frame Rate Cap Enabled**: `On`
 - **Frame Rate Cap**: 30 FPS
+- **Field of View**: 105
 - **Brightness**: Set to `7`
 - **Screen Bounds**: Ensure screen bounds are set to max
 ![Display Settings](images/chest_farm_video_settings.png)
@@ -38,7 +40,7 @@ If you are interested in learning more about how this macro works or about simil
 - **Film Grain**: Disabled
 ![Visual Settings](images/chest_farm_additional_video.png)
 - **HUD Opacity**: Set to `Full`
-- **Colorblind Mode**: Disabled
+- **Colorblind Mode**: Off
 - **Reticle Location**: Center
 ![Visual Settings](images/chest_farm_gameplay.png)
 
