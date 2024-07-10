@@ -1145,6 +1145,10 @@ find_d2() ; find the client area of d2
 
     ; Get the dimensions of the game window's client area
     WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
+    if(Y < 1) {
+        WinMove, ahk_exe destiny2.exe,, X, 1
+    }
+    WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
     VarSetCapacity(Rect, 16)
     DllCall("GetClientRect", "Ptr", WinExist("ahk_id " . Destiny2ID), "Ptr", &Rect)
     ClientWidth := NumGet(Rect, 8, "Int")
