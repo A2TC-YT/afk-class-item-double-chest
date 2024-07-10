@@ -6,6 +6,11 @@ SetWorkingDir, %A_ScriptDir%
 SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
+if InStr(A_ScriptDir, "appdata")
+{
+  MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
+  Exitapp  
+}
 #Include %A_ScriptDir%/overlay_class.ahk
 #Include %A_ScriptDir%/Gdip_all.ahk
 pToken := Gdip_Startup()
