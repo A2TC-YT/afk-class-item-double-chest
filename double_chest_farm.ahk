@@ -21,6 +21,9 @@ global DESTINY_HEIGHT := 0
 
 find_d2()
 
+OVERLAY_OFFSET_X := DESTINY_X
+OVERLAY_OFFSET_Y := DESTINY_Y
+
 if (DESTINY_WIDTH != 1280 || DESTINY_HEIGHT != 720) ; make sure they are actually on windowed mode :D
 {
     MsgBox, % "This script is only designed to work with the game in windowed and a resolution of 1280x720. Your resolution is " DESTINY_WIDTH "x" DESTINY_HEIGHT "."
@@ -44,36 +47,36 @@ Gui, user_input: Show
     ; background for all the stats
     Gui, info_BG: +E0x20 -Caption -Border +hWndExtraInfoBGGUI +ToolWindow
     Gui, info_BG: Color, 292929
-    Gui, info_BG: Show, % "x" destiny_x-350 " y" destiny_y " w350 h" DESTINY_HEIGHT+1 " NA"
+    Gui, info_BG: Show, % "x" destiny_x-350 " y" destiny_y " w" 350 * dpiInverse " h" DESTINY_HEIGHT+1 " NA"
     Winset, Region, % "w500 h" DESTINY_HEIGHT+1 " 0-0 r15-15", ahk_id %ExtraInfoBGGUI%
     WinSet, Transparent, 255, ahk_id %ExtraInfoBGGUI%
 
     ; label text (wont change ever)
-    label_current := new Overlay("label_current", "Current Session Stats:", DESTINY_X-340, DESTINY_Y+120, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
-    label_total := new Overlay("label_total", "Total AFK Stats:", DESTINY_X-340, DESTINY_Y+445, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
-    label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", DESTINY_X+10, DESTINY_Y+DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
+    label_current := new Overlay("label_current", "Current Session Stats:", -340, 120, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
+    label_total := new Overlay("label_total", "Total AFK Stats:", -340, 445, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
+    label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_start_hotkey.toggle_visibility("show")
     label_start_hotkey.toggle_background_visibility("show")
-    label_stop_hotkey := new Overlay("label_stop_hotkey", "Stop: F4", DESTINY_X+130, DESTINY_Y+DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
+    label_stop_hotkey := new Overlay("label_stop_hotkey", "Stop: F4", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_stop_hotkey.toggle_visibility("show")
     label_stop_hotkey.toggle_background_visibility("show")
-    label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", DESTINY_X+250, DESTINY_Y+DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
+    label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", 250, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_close_hotkey.toggle_visibility("show")
     label_close_hotkey.toggle_background_visibility("show")
 
     ; extra info gui stuff 
-    global info_ui := new Overlay("info_ui", "Doing Nothing :3", DESTINY_X-340, DESTINY_Y+10, 1, 18, False, 0xFFFFFF)
-    global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", DESTINY_X-340, DESTINY_Y+60, 1, 16, False, 0xFFFFFF)
+    global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 10, 1, 18, False, 0xFFFFFF)
+    global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 60, 1, 16, False, 0xFFFFFF)
     info_ui.toggle_visibility("show")
     runs_till_orbit_ui.toggle_visibility("show")
 
-    global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", DESTINY_X-340, DESTINY_Y+160, 1, 16, False, 0xFFFFFF) 
-    global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", DESTINY_X-340, DESTINY_Y+190, 1, 16, False, 0xFFFFFF) 
-    global current_chests_ui := new Overlay("current_chests_ui", "Chests - 0", DESTINY_X-340, DESTINY_Y+220, 1, 16, False, 0xFFFFFF) 
-    global current_exotics_ui := new Overlay("current_exotics_ui", "Exotics - 0", DESTINY_X-340, DESTINY_Y+250, 1, 16, False, 0xFFFFFF) 
-    global current_exotic_drop_rate_ui := new Overlay("current_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", DESTINY_X-340, DESTINY_Y+280, 1, 16, False, 0xFFFFFF) 
-    global current_average_loop_time_ui := new Overlay("current_average_loop_time_ui", "Average Loop Time - 0:00.00", DESTINY_X-340, DESTINY_Y+310, 1, 16, False, 0xFFFFFF) 
-    global current_missed_chests_percent_ui := new Overlay("current_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", DESTINY_X-340, DESTINY_Y+340, 1, 16, False, 0xFFFFFF) 
+    global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", -340, 160, 1, 16, False, 0xFFFFFF) 
+    global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", -340, 190, 1, 16, False, 0xFFFFFF) 
+    global current_chests_ui := new Overlay("current_chests_ui", "Chests - 0", -340, 220, 1, 16, False, 0xFFFFFF) 
+    global current_exotics_ui := new Overlay("current_exotics_ui", "Exotics - 0", -340, 250, 1, 16, False, 0xFFFFFF) 
+    global current_exotic_drop_rate_ui := new Overlay("current_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 280, 1, 16, False, 0xFFFFFF) 
+    global current_average_loop_time_ui := new Overlay("current_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 310, 1, 16, False, 0xFFFFFF) 
+    global current_missed_chests_percent_ui := new Overlay("current_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 340, 1, 16, False, 0xFFFFFF) 
     current_time_afk_ui.toggle_visibility("show")
     current_runs_ui.toggle_visibility("show")
     current_chests_ui.toggle_visibility("show")
@@ -82,13 +85,13 @@ Gui, user_input: Show
     current_average_loop_time_ui.toggle_visibility("show")
     current_missed_chests_percent_ui.toggle_visibility("show")
 
-    global total_time_afk_ui := new Overlay("total_time_afk_ui", "Time AFK - !timer11101", DESTINY_X-340, DESTINY_Y+485, 1, 16, False, 0xFFFFFF) 
-    global total_runs_ui := new Overlay("total_runs_ui", "Runs - 0", DESTINY_X-340, DESTINY_Y+515, 1, 16, False, 0xFFFFFF) 
-    global total_chests_ui := new Overlay("total_chests_ui", "Chests - 0", DESTINY_X-340, DESTINY_Y+545, 1, 16, False, 0xFFFFFF) 
-    global total_exotics_ui := new Overlay("total_exotics_ui", "Exotics - 0", DESTINY_X-340, DESTINY_Y+575, 1, 16, False, 0xFFFFFF) 
-    global total_exotic_drop_rate_ui := new Overlay("total_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", DESTINY_X-340, DESTINY_Y+605, 1, 16, False, 0xFFFFFF) 
-    global total_average_loop_time_ui := new Overlay("total_average_loop_time_ui", "Average Loop Time - 0:00.00", DESTINY_X-340, DESTINY_Y+635, 1, 16, False, 0xFFFFFF) 
-    global total_missed_chests_percent_ui := new Overlay("total_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", DESTINY_X-340, DESTINY_Y+665, 1, 16, False, 0xFFFFFF) 
+    global total_time_afk_ui := new Overlay("total_time_afk_ui", "Time AFK - !timer11101", -340, 485, 1, 16, False, 0xFFFFFF) 
+    global total_runs_ui := new Overlay("total_runs_ui", "Runs - 0", -340, 515, 1, 16, False, 0xFFFFFF) 
+    global total_chests_ui := new Overlay("total_chests_ui", "Chests - 0", -340, 545, 1, 16, False, 0xFFFFFF) 
+    global total_exotics_ui := new Overlay("total_exotics_ui", "Exotics - 0", -340, 575, 1, 16, False, 0xFFFFFF) 
+    global total_exotic_drop_rate_ui := new Overlay("total_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 605, 1, 16, False, 0xFFFFFF) 
+    global total_average_loop_time_ui := new Overlay("total_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 635, 1, 16, False, 0xFFFFFF) 
+    global total_missed_chests_percent_ui := new Overlay("total_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 665, 1, 16, False, 0xFFFFFF) 
     total_time_afk_ui.toggle_visibility("show")
     total_runs_ui.toggle_visibility("show")
     total_chests_ui.toggle_visibility("show")
