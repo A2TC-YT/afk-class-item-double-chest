@@ -480,7 +480,7 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     CHEST_OPENED := false
     ; we can force only chest 21 to spawn every time, so we will do that
     Send, % "{" key_binds["move_backward"] " Down}"
-    PreciseSleep(300)
+    PreciseSleep(200)
     Send, % "{" key_binds["move_backward"] " Up}"
     PreciseSleep(100)
     Send, % "{" key_binds["move_right"] " Down}"
