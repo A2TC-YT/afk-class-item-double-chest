@@ -1,3 +1,4 @@
+#Requires AutoHotkey >=1.1 <1.2
 #SingleInstance, Force
 SendMode Input
 CoordMode, Mouse, Screen
