@@ -182,7 +182,7 @@ for key, value in key_binds ; make sure the keybinds are set (except for setting
     }
 }
 
-; dont start this timer until suer has submitted the gui
+; dont start this timer until user has submitted the gui
 ; SetTimer, check_tabbed_out, 1000
 
 return
@@ -339,9 +339,7 @@ F5:: ; same thing but close the script
 
 ; F7:: ; testing hotkey
 ; {
-;     hide_gui() 
-;     Sleep, 5000
-;     show_gui()
+;     GoSub, check_for_exotic_drop
 ;     return
 ; }
 
@@ -817,11 +815,11 @@ check_for_chest_open: ; bad way of checking for chest opening but it works for t
 
 check_for_exotic_drop: ; okay way of checking for exotic drops
 {
-    percent_white_1 := exact_color_check("1258|198|20|20", 20, 20, 0xD8BD48) ; check for exotic color on side of screen
-    percent_white_2 := exact_color_check("1258|272|20|20", 20, 20, 0xD8BD48)
-    percent_white_3 := exact_color_check("1258|346|20|20", 20, 20, 0xD8BD48)
-    percent_white_4 := exact_color_check("1258|420|20|20", 20, 20, 0xD8BD48)
-    if (percent_white_1 > 0.07 || percent_white_2 > 0.07 || percent_white_3 > 0.07 || percent_white_4 > 0.07)
+    percent_white_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
+    percent_white_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
+    percent_white_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
+    percent_white_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
+    if (percent_white_1 > 0.05 || percent_white_2 > 0.05 || percent_white_3 > 0.05 || percent_white_4 > 0.05)
     {
         EXOTIC_DROP := true
         SetTimer, check_for_exotic_drop, Off
