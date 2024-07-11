@@ -46,7 +46,7 @@ if (DESTINY_WIDTH > 1280 || DESTINY_HEIGHT > 720) ; make sure they are actually 
 Gui, user_input: New, , Select class and their position on the character select screen
 Gui, user_input: -Caption -Border +hWnduser_input_hwnd +AlwaysOnTop
 Gui, user_input: Add, Text,, Select Class:
-Gui, user_input: Add, DropDownList, vClassChoice, hunter||warlock |titan
+Gui, user_input: Add, DropDownList, vClassChoice, hunter||warlock|titan
 Gui, user_input: Add, Text,, Select Position:`n(on character select)
 Gui, user_input: Add, DropDownList, vPositionChoice, top||middle|bottom
 Gui, user_input: Add, Text,, Which Aachen do you have:
