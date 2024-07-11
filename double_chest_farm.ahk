@@ -6,14 +6,18 @@ SetWorkingDir, %A_ScriptDir%
 SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
+
 if InStr(A_ScriptDir, "appdata")
 {
-  MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
-  Exitapp  
+    MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
+    Exitapp  
 }
+
 #Include %A_ScriptDir%/overlay_class.ahk
 #Include %A_ScriptDir%/Gdip_all.ahk
 pToken := Gdip_Startup()
+
+global DEBUG := false
 
 global GUARDIAN := 3 ; position on the character select screen
 global CHARACTER_TYPE := "" ; can be "hunter", "titan", or "warlock"
@@ -1108,7 +1112,11 @@ wait_for_spawn(time_out:=300000) ; waits for spawn in by checking for heavy ammo
             return true
         Sleep, 10
         PixelGetColor, pixel_color, 387+DESTINY_X, 667+DESTINY_Y, RGB ; heavy ammo
+        if (DEBUG)
+            draw_crosshair(387+DESTINY_X, 667+DESTINY_Y)
         if (pixel_color == 0xC19AFF)
+            return true
+        if (pixel_color == 0xC299FF)
             return true
         Sleep, 10
         if (A_TickCount - start_time > time_out) ; times out eventually so we dont get stuck forever
@@ -1403,6 +1411,37 @@ write_stats()
         ; }
     }
 }
+
+draw_crosshair( x:=0, y:=0 )
+{   
+    CrosshairColor := 0x0000FF ; Red
+    LineLength := 50
+
+    ; Create a device context for the screen
+    hdc := DllCall("GetDC", "Ptr", 0, "Ptr")
+    
+    ; Create a red pen with 1px width
+    hPen := DllCall("CreatePen", "Int", 0, "Int", 1, "UInt", CrosshairColor, "Ptr")
+    hOldPen := DllCall("SelectObject", "Ptr", hdc, "Ptr", hPen)
+    
+    ; Draw the vertical line
+    DllCall("MoveToEx", "Ptr", hdc, "Int", x, "Int", y - LineLength, "Ptr", 0)
+    DllCall("LineTo", "Ptr", hdc, "Int", x, "Int", y + LineLength)
+    
+    ; Draw the horizontal line
+    DllCall("MoveToEx", "Ptr", hdc, "Int", x - LineLength, "Int", y, "Ptr", 0)
+    DllCall("LineTo", "Ptr", hdc, "Int", x + LineLength, "Int", y)
+    
+    ; Restore the old pen and delete the created pen
+    DllCall("SelectObject", "Ptr", hdc, "Ptr", hOldPen)
+    DllCall("DeleteObject", "Ptr", hPen)
+    
+    ; Release the device context
+    DllCall("ReleaseDC", "Ptr", 0, "Ptr", hdc)
+    
+    return
+}
+
 ; user input gui 
 ; =================================== ;
     ; Handle OK button click
