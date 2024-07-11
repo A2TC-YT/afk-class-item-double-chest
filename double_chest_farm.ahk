@@ -15,8 +15,8 @@ if InStr(A_ScriptDir, "appdata")
 #Include %A_ScriptDir%/Gdip_all.ahk
 pToken := Gdip_Startup()
 
-global GUARDIAN := 2 ; position on the character select screen
-global CHARACTER_TYPE := "warlock" ; can be "hunter", "titan", or "warlock"
+global GUARDIAN := 3 ; position on the character select screen
+global CHARACTER_TYPE := "titan" ; can be "hunter", "titan", or "warlock"
 global AACHEN_CHOICE := "kinetic"
 ; will be coordinates of destinys client area (actual game window not including borders)
 global DESTINY_X := 0
@@ -46,7 +46,7 @@ if (DESTINY_WIDTH > 1280 || DESTINY_HEIGHT > 720) ; make sure they are actually 
 Gui, user_input: New, , Select class and their position on the character select screen
 Gui, user_input: -Caption -Border +hWnduser_input_hwnd +AlwaysOnTop
 Gui, user_input: Add, Text,, Select Class:
-Gui, user_input: Add, DropDownList, vClassChoice, hunter||warlock ; |titan
+Gui, user_input: Add, DropDownList, vClassChoice, hunter||warlock |titan
 Gui, user_input: Add, Text,, Select Position:`n(on character select)
 Gui, user_input: Add, DropDownList, vPositionChoice, top||middle|bottom
 Gui, user_input: Add, Text,, Which Aachen do you have:
@@ -158,6 +158,7 @@ keys_we_press := [
     ,"hold_zoom"
     ,"primary_weapon"
     ,"special_weapon"
+    ,"heavy_weapon"
     ,"move_forward"
     ,"move_backward"
     ,"move_left"
@@ -326,6 +327,7 @@ F3:: ; main hotkey that runs the script
         IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics
     }
     Reload
+    return
 }
 
 F5:: ; same thing but close the script
@@ -519,7 +521,7 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     return group_5_chest_opened
 }
 
-group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
+group_4_chests(chest_number) ; picks up chests 16-20 
 {
     group_4_chest_opened := false
     if (!chest_number)
@@ -559,11 +561,12 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
+            Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2210)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 500)
-            PreciseSleep(1100)
+            PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else if (CHARACTER_TYPE == "warlock")
@@ -581,14 +584,15 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
+            Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2400)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 450)
-            PreciseSleep(1100)
+            PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
-        else ; TODO: titan movement
+        else 
         {
             DllCall("mouse_event", uint, 1, int, 2535, int, 400)
             Send, % "{" key_binds["jump"] " Down}"
@@ -605,11 +609,12 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
-            PreciseSleep(2300)
+            Send, % "{" key_binds["heavy_weapon"] "}"
+            PreciseSleep(2350)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 450)
-            PreciseSleep(1100)
+            PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
     }
@@ -633,13 +638,14 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
             DllCall("mouse_event", uint, 1, int, -380, int, 400)
+            Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(1250)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
-            PreciseSleep(1100)
+            PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else if (CHARACTER_TYPE == "warlock")
@@ -654,16 +660,17 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             PreciseSleep(700)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
             DllCall("mouse_event", uint, 1, int, -400, int, 400)
+            Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(900)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
-            PreciseSleep(1100)
+            PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
-        else ; TODO: titan movement
+        else
         {
             DllCall("mouse_event", uint, 1, int, -3350, int, 400)
             Send, % "{" key_binds["move_forward"] " Down}"
@@ -675,13 +682,14 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             PreciseSleep(700)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
             DllCall("mouse_event", uint, 1, int, -400, int, 400)
-            PreciseSleep(1195)
+            Send, % "{" key_binds["heavy_weapon"] "}"
+            PreciseSleep(1055)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
-            PreciseSleep(1100)
+            PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
     }
@@ -709,6 +717,7 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
+            Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2230)
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
@@ -731,29 +740,31 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
+            Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2350)
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
-        else ; TODO: titan movement
+        else 
         {
             DllCall("mouse_event", uint, 1, int, -1410, int, 400)
             Send, % "{" key_binds["move_forward"] " Down}"
             Send, % "{" key_binds["toggle_sprint"] " Down}"
-            PreciseSleep(1800)
+            PreciseSleep(1900)
             Send, % "{" key_binds["jump"] "}"
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             PreciseSleep(200)
             Send, % "{" key_binds["jump"] "}"
-            PreciseSleep(1300)
+            PreciseSleep(1600)
             Send, % "{" key_binds["jump"] "}"
             SetTimer, check_for_chest_open, 50
             SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
-            PreciseSleep(2270)
+            Send, % "{" key_binds["heavy_weapon"] "}"
+            PreciseSleep(2350)
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
@@ -772,6 +783,7 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
         Send, % "{" key_binds["interact"] " Down}"
         SetTimer, check_for_chest_open, 50
         SetTimer, check_for_exotic_drop, 50
+        Send, % "{" key_binds["heavy_weapon"] "}"
         PreciseSleep(2420)
         Send, % "{" key_binds["move_forward"] " Up}"
         PreciseSleep(1300)
@@ -792,6 +804,7 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
         SetTimer, check_for_chest_open, 50
         SetTimer, check_for_exotic_drop, 50
         DllCall("mouse_event", uint, 1, int, 610, int, 50)
+        Send, % "{" key_binds["heavy_weapon"] "}"
         PreciseSleep(1450)
         Send, % "{" key_binds["move_forward"] " Up}"
         DllCall("mouse_event", uint, 1, int, -100, int, 50)
@@ -808,7 +821,7 @@ group_4_chests(chest_number) ; picks up chests 16-20 ; TODO TITAN, GRAHHHHHHHH
 check_for_chest_open: ; bad way of checking for chest opening but it works for the most part
 {
     percent_white := exact_color_check("583|473|34|32", 34, 32, 0xCBE4FF) ; checks for the circle around the interact prompt
-    if (percent_white > 0.11)
+    if (percent_white > 0.07)
     {
         CHEST_OPENED := true
         SetTimer, check_for_chest_open, Off
@@ -822,7 +835,7 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
     percent_white_2 := exact_color_check("1258|272|20|20", 20, 20, 0xD8BD48)
     percent_white_3 := exact_color_check("1258|346|20|20", 20, 20, 0xD8BD48)
     percent_white_4 := exact_color_check("1258|420|20|20", 20, 20, 0xD8BD48)
-    if (percent_white_1 > 0.12 || percent_white_2 > 0.12 || percent_white_3 > 0.12 || percent_white_4 > 0.12)
+    if (percent_white_1 > 0.07 || percent_white_2 > 0.07 || percent_white_3 > 0.07 || percent_white_4 > 0.07)
     {
         EXOTIC_DROP := true
         SetTimer, check_for_exotic_drop, Off
@@ -838,7 +851,7 @@ reload_landing() ; in the name innit
         Sleep, 1400
         d2_click(20, 381, 0)
         PreciseSleep(850)
-        d2_click(260, 338, 0)
+        d2_click(270, 338, 0)
         Sleep, 100
         Send, {LButton Down}
         Sleep, 1100
@@ -878,9 +891,9 @@ orbit_landing() ; loads into the landing from orbit
         Sleep, 1800
         d2_click(20, 381, 0)
         PreciseSleep(850)
-        d2_click(260, 338, 0)
+        d2_click(270, 338, 0)
         Sleep, 100
-        d2_click(260, 338)
+        d2_click(270, 338)
         Sleep, 1500
         percent_white := simpleColorCheck("33|573|24|24", 24, 24)
         if (!percent_white >= 0.4) ; we missed the landing zone
@@ -937,6 +950,7 @@ change_character(character)
         if (A_TickCount - search_start > 90000)
             break
     }
+    Sleep, 2000
     if (character == 1)
     {
         d2_click(900, 304, 0)
@@ -956,7 +970,7 @@ change_character(character)
         d2_click(902, 448)
     }
     d2_click(640, 360, 0)
-    Sleep, 3000
+    Sleep, 6000
     search_start := A_TickCount
     while (true) ; wait for screen to be not black (just checking 3 random pixels)
     {
