@@ -1,4 +1,4 @@
-#Requires AutoHotkey >=1.1 <1.2
+#Requires AutoHotkey v1.1.27+
 #SingleInstance, Force
 SendMode Input
 CoordMode, Mouse, Screen
@@ -69,23 +69,15 @@ Gui, user_input: Show
     WinSet, Transparent, 255, ahk_id %ExtraInfoBGGUI%
 
     ; label text (wont change ever)
-    label_current := new Overlay("label_current", "Current Session Stats:", -340, 120, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
-    label_total := new Overlay("label_total", "Total AFK Stats:", -340, 425, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
+    label_current := new Overlay("label_current", "Current Session Stats:", -340, 120, 1, 14, False, 0xFFFFFF)
+    label_total := new Overlay("label_total", "Total AFK Stats:", -340, 425, 1, 14, False, 0xFFFFFF)
     label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
-    label_start_hotkey.toggle_visibility("show")
-    label_start_hotkey.toggle_background_visibility("show")
     label_stop_hotkey := new Overlay("label_stop_hotkey", "Stop: F4", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
-    label_stop_hotkey.toggle_visibility("show")
-    label_stop_hotkey.toggle_background_visibility("show")
     label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", 250, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
-    label_close_hotkey.toggle_visibility("show")
-    label_close_hotkey.toggle_background_visibility("show")
-
+    label_center_d2_hotkey := new Overlay("label_center_d2_hotkey", "Center D2: F6", 380, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     ; extra info gui stuff 
     global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 10, 1, 18, False, 0xFFFFFF)
     global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 60, 1, 16, False, 0xFFFFFF)
-    info_ui.toggle_visibility("show")
-    runs_till_orbit_ui.toggle_visibility("show")
 
     global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", -340, 150, 1, 16, False, 0xFFFFFF) 
     global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", -340, 180, 1, 16, False, 0xFFFFFF) 
@@ -96,15 +88,6 @@ Gui, user_input: Show
     global current_missed_chests_percent_ui := new Overlay("current_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 330, 1, 16, False, 0xFFFFFF) 
     global current_chest_counters1 := new Overlay("current_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 360, 4, 10, False, 0xFFFFFF) 
     global current_chest_counters2 := new Overlay("current_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 380, 4, 10, False, 0xFFFFFF) 
-    current_time_afk_ui.toggle_visibility("show")
-    current_runs_ui.toggle_visibility("show")
-    current_chests_ui.toggle_visibility("show")
-    current_exotics_ui.toggle_visibility("show")
-    current_exotic_drop_rate_ui.toggle_visibility("show")
-    current_average_loop_time_ui.toggle_visibility("show")
-    current_missed_chests_percent_ui.toggle_visibility("show")
-    current_chest_counters1.toggle_visibility("show")
-    current_chest_counters2.toggle_visibility("show")
 
     global total_time_afk_ui := new Overlay("total_time_afk_ui", "Time AFK - !timer11101", -340, 455, 1, 16, False, 0xFFFFFF) 
     global total_runs_ui := new Overlay("total_runs_ui", "Runs - 0", -340, 485, 1, 16, False, 0xFFFFFF) 
@@ -115,15 +98,11 @@ Gui, user_input: Show
     global total_missed_chests_percent_ui := new Overlay("total_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 635, 1, 16, False, 0xFFFFFF) 
     global total_chest_counters1 := new Overlay("total_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 665, 4, 10, False, 0xFFFFFF) 
     global total_chest_counters2 := new Overlay("total_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 685, 4, 10, False, 0xFFFFFF) 
-    total_time_afk_ui.toggle_visibility("show")
-    total_runs_ui.toggle_visibility("show")
-    total_chests_ui.toggle_visibility("show")
-    total_exotics_ui.toggle_visibility("show")
-    total_exotic_drop_rate_ui.toggle_visibility("show")
-    total_average_loop_time_ui.toggle_visibility("show")
-    total_missed_chests_percent_ui.toggle_visibility("show")
-    total_chest_counters1.toggle_visibility("show")
-    total_chest_counters2.toggle_visibility("show")
+
+    global overlay_elements := [label_total, label_current, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, info_ui, runs_till_orbit_ui, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
+
+    show_gui()
+    global GUI_VISIBLE := true
 
     ; fun info global vars
     ; showing stats
@@ -202,6 +181,9 @@ for key, value in key_binds ; make sure the keybinds are set (except for setting
         }
     }
 }
+
+; dont start this timer until suer has submitted the gui
+; SetTimer, check_tabbed_out, 1000
 
 return
 
@@ -329,6 +311,13 @@ F3:: ; main hotkey that runs the script
     return
 }
 
+F6::
+{
+    WinGetPos,,, Width, Height, ahk_exe destiny2.exe
+    WinMove, ahk_exe destiny2.exe,, (A_ScreenWidth/2)-(Width/2), (A_ScreenHeight/2)-(Height/2)
+    ; we also want it to reload script so gui is in the right spot
+}
+
 *F4:: ; reload the script, release any possible held keys, save stats
 {
     for key, value in key_binds 
@@ -348,10 +337,11 @@ F5:: ; same thing but close the script
     ExitApp
 }
 
-; hotkey i use to test random shit
-; F6::
+; F7:: ; testing hotkey
 ; {
-;     orbit_landing()
+;     hide_gui() 
+;     Sleep, 5000
+;     show_gui()
 ;     return
 ; }
 
@@ -1443,6 +1433,52 @@ draw_crosshair( x:=0, y:=0 )
     return
 }
 
+hide_gui()
+{
+    for index, ui_element in overlay_elements
+    {
+        ui_element.toggle_visibility("hide")
+        if (ui_element.has_background)
+            ui_element.toggle_background_visibility("hide")
+    }
+    Gui, info_BG: Hide
+    GUI_VISIBLE := false
+    return
+}
+
+show_gui()
+{
+    for index, ui_element in overlay_elements
+    {
+        ui_element.toggle_visibility("show")
+        if (ui_element.has_background)
+            ui_element.toggle_background_visibility("show")
+    }
+    Gui, info_BG: Show, NA
+    GUI_VISIBLE := true
+    return
+}
+
+check_tabbed_out:
+{
+    destiny_active := false
+    selection_ui_active := false
+    IfWinActive, ahk_exe destiny2.exe
+        destiny_active := true
+    IfWinActive, ahk_id %user_input_hwnd%
+        selection_ui_active := true
+    if (destiny_active || selection_ui_active)
+    {
+        if (!GUI_VISIBLE)
+            show_gui()
+    }
+    else
+    {
+        if (GUI_VISIBLE)
+            hide_gui()
+    }
+}
+
 ; user input gui 
 ; =================================== ;
     ; Handle OK button click
@@ -1459,6 +1495,7 @@ draw_crosshair( x:=0, y:=0 )
         else if (PositionChoice == "bottom")
             GUARDIAN := 3
         Gui, user_input: Destroy
+        SetTimer, check_tabbed_out, 200
     return
 
     ; Exit script when GUI is closed
