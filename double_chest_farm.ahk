@@ -819,7 +819,7 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
     percent_white_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
     percent_white_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
     percent_white_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
-    if (percent_white_1 > 0.05 || percent_white_2 > 0.05 || percent_white_3 > 0.05 || percent_white_4 > 0.05)
+    if (percent_white_1 > 0.02 || percent_white_2 > 0.02 || percent_white_3 > 0.02 || percent_white_4 > 0.02)
     {
         EXOTIC_DROP := true
         SetTimer, check_for_exotic_drop, Off
