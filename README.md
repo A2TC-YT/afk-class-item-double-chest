@@ -10,6 +10,9 @@ Because of this increase in complexity the in game settings and setup matter muc
 
 If you are interested in learning more about how this macro works or about similar macros that work while you are tabbed out of the game join the [discord](https://discord.gg/KGyjysA5WY).
 
+## Support
+If you like this macro and want to support my work, you can do so on [Ko-Fi](https://ko-fi.com/a2tc_awesome_guy). Your support is greatly appreciated and helps me continue developing and improving macros like this. :3
+
 ## Required Settings
 
 ### Sensitivity
@@ -48,7 +51,8 @@ If you are interested in learning more about how this macro works or about simil
 - **100 Mobility**: Yes, on every class (even warlock)
 - **Jump**: Warlock - Burst Glide | Hunter - Triple Jump | Titan - Catapult Lift
 - **No Movement Exotics**: No ST0MP-EE5, no TRANSVERSIVE STEPS, etc.
-- **Weapon**: Get and equip the **kinetic** blue rarity sniper AACHEN-LR2 from collections
+- **Weapon**: Get and equip the blue rarity sniper AACHEN-LR2 from collections, it can be either the kinetic or void one.
+- **Sword**: You must have a sword equipped, does not matter what sword.
 - **Ghost Mod**: You must equip the `Wombo Detector` ghost mod (alternatively the `Expert Tracker` and `Treasure Hunter` ghost mods will actually work better but are no longer obtainable)
 ![Additional Settings](images/chest_farm_mobi.png)
 ![Additional Settings](images/chest_farm_aachen.png)
@@ -67,6 +71,7 @@ If you are interested in learning more about how this macro works or about simil
 
 4. **Run the Macro**
    - Navigate to the unzipped folder and run the `double_chest_farm.ahk` file by double-clicking it.
+   - In the input box be sure to select what character you are using, what position they are on in the character select screen, and which aachen you have equipped.
    - If the UI for the stats is off the screen you can move the Destiny window and press F4 to reload the script.
 
 5. **Keybinds**
@@ -75,6 +80,5 @@ If you are interested in learning more about how this macro works or about simil
      - **Stop Macro**: Press `F4`
      - **Close Macro**: Press `F5`
 
-## Support
-- For any additional support or to ask any questions join the [discord](https://discord.gg/KGyjysA5WY)
-- And if you wanna support me you can [here :3](https://ko-fi.com/a2tc_awesome_guy)
+## Further Help
+For more help or to ask other questions please join the [discord](https://discord.gg/KGyjysA5WY).
