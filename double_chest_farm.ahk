@@ -20,7 +20,7 @@ pToken := Gdip_Startup()
 global DEBUG := false
 
 global GUARDIAN := 3 ; position on the character select screen
-global CHARACTER_TYPE := "titan" ; can be "hunter", "titan", or "warlock"
+global CHARACTER_TYPE := "" ; can be "hunter", "titan", or "warlock"
 global AACHEN_CHOICE := "kinetic"
 ; will be coordinates of destinys client area (actual game window not including borders)
 global DESTINY_X := 0
@@ -69,7 +69,7 @@ Gui, user_input: Show
 
     ; label text (wont change ever)
     label_current := new Overlay("label_current", "Current Session Stats:", -340, 120, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
-    label_total := new Overlay("label_total", "Total AFK Stats:", -340, 445, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
+    label_total := new Overlay("label_total", "Total AFK Stats:", -340, 425, 1, 14, False, 0xFFFFFF).toggle_visibility("show")
     label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_start_hotkey.toggle_visibility("show")
     label_start_hotkey.toggle_background_visibility("show")
@@ -86,13 +86,15 @@ Gui, user_input: Show
     info_ui.toggle_visibility("show")
     runs_till_orbit_ui.toggle_visibility("show")
 
-    global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", -340, 160, 1, 16, False, 0xFFFFFF) 
-    global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", -340, 190, 1, 16, False, 0xFFFFFF) 
-    global current_chests_ui := new Overlay("current_chests_ui", "Chests - 0", -340, 220, 1, 16, False, 0xFFFFFF) 
-    global current_exotics_ui := new Overlay("current_exotics_ui", "Exotics - 0", -340, 250, 1, 16, False, 0xFFFFFF) 
-    global current_exotic_drop_rate_ui := new Overlay("current_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 280, 1, 16, False, 0xFFFFFF) 
-    global current_average_loop_time_ui := new Overlay("current_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 310, 1, 16, False, 0xFFFFFF) 
-    global current_missed_chests_percent_ui := new Overlay("current_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 340, 1, 16, False, 0xFFFFFF) 
+    global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", -340, 150, 1, 16, False, 0xFFFFFF) 
+    global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", -340, 180, 1, 16, False, 0xFFFFFF) 
+    global current_chests_ui := new Overlay("current_chests_ui", "Chests - 0", -340, 210, 1, 16, False, 0xFFFFFF) 
+    global current_exotics_ui := new Overlay("current_exotics_ui", "Exotics - 0", -340, 240, 1, 16, False, 0xFFFFFF) 
+    global current_exotic_drop_rate_ui := new Overlay("current_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 270, 1, 16, False, 0xFFFFFF) 
+    global current_average_loop_time_ui := new Overlay("current_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 300, 1, 16, False, 0xFFFFFF) 
+    global current_missed_chests_percent_ui := new Overlay("current_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 330, 1, 16, False, 0xFFFFFF) 
+    global current_chest_counters1 := new Overlay("current_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 360, 4, 10, False, 0xFFFFFF) 
+    global current_chest_counters2 := new Overlay("current_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 380, 4, 10, False, 0xFFFFFF) 
     current_time_afk_ui.toggle_visibility("show")
     current_runs_ui.toggle_visibility("show")
     current_chests_ui.toggle_visibility("show")
@@ -100,14 +102,18 @@ Gui, user_input: Show
     current_exotic_drop_rate_ui.toggle_visibility("show")
     current_average_loop_time_ui.toggle_visibility("show")
     current_missed_chests_percent_ui.toggle_visibility("show")
+    current_chest_counters1.toggle_visibility("show")
+    current_chest_counters2.toggle_visibility("show")
 
-    global total_time_afk_ui := new Overlay("total_time_afk_ui", "Time AFK - !timer11101", -340, 485, 1, 16, False, 0xFFFFFF) 
-    global total_runs_ui := new Overlay("total_runs_ui", "Runs - 0", -340, 515, 1, 16, False, 0xFFFFFF) 
-    global total_chests_ui := new Overlay("total_chests_ui", "Chests - 0", -340, 545, 1, 16, False, 0xFFFFFF) 
-    global total_exotics_ui := new Overlay("total_exotics_ui", "Exotics - 0", -340, 575, 1, 16, False, 0xFFFFFF) 
-    global total_exotic_drop_rate_ui := new Overlay("total_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 605, 1, 16, False, 0xFFFFFF) 
-    global total_average_loop_time_ui := new Overlay("total_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 635, 1, 16, False, 0xFFFFFF) 
-    global total_missed_chests_percent_ui := new Overlay("total_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 665, 1, 16, False, 0xFFFFFF) 
+    global total_time_afk_ui := new Overlay("total_time_afk_ui", "Time AFK - !timer11101", -340, 455, 1, 16, False, 0xFFFFFF) 
+    global total_runs_ui := new Overlay("total_runs_ui", "Runs - 0", -340, 485, 1, 16, False, 0xFFFFFF) 
+    global total_chests_ui := new Overlay("total_chests_ui", "Chests - 0", -340, 515, 1, 16, False, 0xFFFFFF) 
+    global total_exotics_ui := new Overlay("total_exotics_ui", "Exotics - 0", -340, 545, 1, 16, False, 0xFFFFFF) 
+    global total_exotic_drop_rate_ui := new Overlay("total_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 575, 1, 16, False, 0xFFFFFF) 
+    global total_average_loop_time_ui := new Overlay("total_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 605, 1, 16, False, 0xFFFFFF) 
+    global total_missed_chests_percent_ui := new Overlay("total_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 635, 1, 16, False, 0xFFFFFF) 
+    global total_chest_counters1 := new Overlay("total_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 665, 4, 10, False, 0xFFFFFF) 
+    global total_chest_counters2 := new Overlay("total_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 685, 4, 10, False, 0xFFFFFF) 
     total_time_afk_ui.toggle_visibility("show")
     total_runs_ui.toggle_visibility("show")
     total_chests_ui.toggle_visibility("show")
@@ -115,6 +121,8 @@ Gui, user_input: Show
     total_exotic_drop_rate_ui.toggle_visibility("show")
     total_average_loop_time_ui.toggle_visibility("show")
     total_missed_chests_percent_ui.toggle_visibility("show")
+    total_chest_counters1.toggle_visibility("show")
+    total_chest_counters2.toggle_visibility("show")
 
     ; fun info global vars
     ; showing stats
@@ -122,16 +130,23 @@ Gui, user_input: Show
     global TOTAL_RUNS := 0
     global TOTAL_CHESTS := 0
     global TOTAL_EXOTICS := 0
-    ; check if there is a file called `afk_chest_stats.txt` and if so, load the stats from it
-    if (FileExist("afk_chest_stats.ini"))
-    {
-        IniRead, TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time, 0
-        IniRead, TOTAL_RUNS, afk_chest_stats.ini, stats, runs, 0
-        IniRead, TOTAL_CHESTS, afk_chest_stats.ini, stats, chests, 0
-        IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics, 0
+
+    global classes := ["hunter", "titan", "warlock"]
+    global data_types := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
+    global chestIDs := ["21", "20", "17", "19", "18", "16"]
+
+    global stats := {}
+
+    for _, characterClass in classes {
+        for _, data_type in data_types {
+            stats[characterClass data_type] := {}
+            for _, chestID in chestIDs {
+                stats[characterClass data_type][chestID] := 0
+            }
+        }
     }
-    else 
-        FileAppend, 0`n0`n0`n0, afk_chest_stats.txt
+
+    read_stats()
 
     ; update the total ui stuff with loaded stats 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(TOTAL_FARM_TIME, true, true, true, false))
@@ -252,24 +267,26 @@ F3:: ; main hotkey that runs the script
                 continue
             }
             info_ui.update_content("Going to chests - " chest_spawns[1] " and " chest_spawns[2])
+            log_chest("appearance", chest_spawns[1])
             group_5_chest_opened := group_5_chests() ; open chest 21 if its spawned
             if (group_5_chest_opened)
             {
+                log_chest("pickup", chest_spawns[1])
                 CURRENT_CHESTS++
                 remaining_chests--
             }
-            total_chests_ui.update_content("Chests - " TOTAL_CHESTS+CURRENT_CHESTS)
-            current_chests_ui.update_content("Chests - " CURRENT_CHESTS)
+            update_chest_ui()
             if (chest_spawns[2]) ; open the second chest (one from group 4)
             {
+                log_chest("appearance", chest_spawns[2])
                 group_4_chest_opened := group_4_chests(chest_spawns[2])
                 if (group_4_chest_opened)
                 {
+                    log_chest("pickup", chest_spawns[2])
                     CURRENT_CHESTS++
                     remaining_chests--
                 }
-                total_chests_ui.update_content("Chests - " TOTAL_CHESTS+CURRENT_CHESTS)
-                current_chests_ui.update_content("Chests - " CURRENT_CHESTS)
+                update_chest_ui()
             }
             info_ui.update_content("Relaunching Landing")
             WinActivate, ahk_exe destiny2.exe ; make absolutely, positively, certain we are tabbed in
@@ -316,20 +333,7 @@ F3:: ; main hotkey that runs the script
     for key, value in key_binds 
         send, % "{" value " Up}"
     ; save all the stats to the afk_chest_stats.ini file
-    if (CURRENT_FARM_START_TIME)
-    {
-        ; Calculate the updated totals
-        TOTAL_FARM_TIME += A_TickCount - CURRENT_FARM_START_TIME
-        TOTAL_RUNS := TOTAL_RUNS + CURRENT_RUNS
-        TOTAL_CHESTS := TOTAL_CHESTS + CURRENT_CHESTS
-        TOTAL_EXOTICS := TOTAL_EXOTICS + CURRENT_EXOTICS
-
-        ; Write the updated totals to the ini file
-        IniWrite, % TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time
-        IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, stats, runs
-        IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, stats, chests
-        IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics
-    }
+    write_stats()
     Reload
     return
 }
@@ -339,20 +343,7 @@ F5:: ; same thing but close the script
     for key, value in key_binds 
         send, % "{" value " Up}"
     ; save all the stats to the afk_chest_stats.ini file
-    if (CURRENT_FARM_START_TIME)
-    {
-        ; Calculate the updated totals
-        TOTAL_FARM_TIME += A_TickCount - CURRENT_FARM_START_TIME
-        TOTAL_RUNS := TOTAL_RUNS + CURRENT_RUNS
-        TOTAL_CHESTS := TOTAL_CHESTS + CURRENT_CHESTS
-        TOTAL_EXOTICS := TOTAL_EXOTICS + CURRENT_EXOTICS
-
-        ; Write the updated totals to the ini file
-        IniWrite, % TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time
-        IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, stats, runs
-        IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, stats, chests
-        IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics
-    }
+    write_stats()
     ExitApp
 }
 
@@ -847,6 +838,43 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
     return
 }
 
+log_chest(data, chestID) {
+    for _, data_type in data_types {
+        if (InStr(data_type, data))
+        {
+            stats[CHARACTER_TYPE data_type][chestID]++
+        }
+    }
+}
+
+; global data_types := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
+
+current_counter(id)
+{
+    return chest_counter(id, stats[CHARACTER_TYPE "current_appearances"][id], stats[CHARACTER_TYPE "current_pickups"][id])
+}
+
+total_counter(id)
+{
+    return chest_counter(id, stats[CHARACTER_TYPE "total_appearances"][id], stats[CHARACTER_TYPE "total_pickups"][id])
+}
+
+chest_counter(id, appearances, pickups)
+{
+    return id ":" Format("[{:3}/{:3}]", pickups, appearances)
+}
+
+update_chest_ui()
+{
+    total_chests_ui.update_content("Chests - " TOTAL_CHESTS+CURRENT_CHESTS)
+    current_chests_ui.update_content("Chests - " CURRENT_CHESTS)
+
+    current_chest_counters1.update_content(current_counter(21) "  " current_counter(20) "  " current_counter(17))
+    current_chest_counters2.update_content(current_counter(19) "  " current_counter(18) "  " current_counter(16))
+    total_chest_counters1.update_content(total_counter(21) "  " total_counter(20) "  " total_counter(17))
+    total_chest_counters2.update_content(total_counter(19) "  " total_counter(18) "  " total_counter(16))
+}
+
 reload_landing() ; in the name innit
 {
     loop, 5
@@ -1306,6 +1334,84 @@ IsAdminProcess(pid) {
     return NumGet(TOKEN_ELEVATION, 0) != 0
 }
 
+read_stats()
+{
+    ; check if there is a file called `afk_chest_stats.txt` and if so, load the stats from it
+    if (FileExist("afk_chest_stats.ini")) {
+        IniRead, TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time, 0
+        IniRead, TOTAL_RUNS, afk_chest_stats.ini, stats, runs, 0
+        IniRead, TOTAL_CHESTS, afk_chest_stats.ini, stats, chests, 0
+        IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics, 0
+
+        for _, characterClass in classes {
+            for _, data_type in data_types {
+                if (InStr(data_type, "total"))
+                {
+                    for _, chestID in chestIDs {
+                        IniRead, temp, afk_chest_stats.ini, % characterClass, % data_type "_" chestID, 0
+                        stats[characterClass data_type][chestID] := temp
+                    }
+                }
+            }
+        }
+
+        ; for _, characterClass in classes {
+        ;     Loop, % CHESTS.MaxIndex()
+        ;     {
+        ;         chestID := CHESTS[A_Index]
+
+        ;         IniRead, temp, afk_chest_stats.ini, characterClass, total_appearances_%chestID%, 0
+        ;         stats[characterClass].TOTAL_CHEST_APPEARANCES[ "" chestID ] := temp + 0
+        ;         IniRead, temp, afk_chest_stats.ini, characterClass, total_success_%chestID%, 0
+        ;         stats[characterClass].TOTAL_SUCCESSFUL_PICKUPS[ "" chestID ] := temp + 0
+        ;     }
+        ; }
+    }
+    else
+    {
+        FileAppend, 0`n0`n0`n0`n0`n0, afk_chest_stats.txt
+    }
+}
+
+write_stats()
+{
+    if (CURRENT_FARM_START_TIME)
+    {
+        ; Calculate the updated totals
+        TOTAL_FARM_TIME += A_TickCount - CURRENT_FARM_START_TIME
+        TOTAL_RUNS := TOTAL_RUNS + CURRENT_RUNS
+        TOTAL_CHESTS := TOTAL_CHESTS + CURRENT_CHESTS
+        TOTAL_EXOTICS := TOTAL_EXOTICS + CURRENT_EXOTICS
+
+        ; Write the updated totals to the ini file
+        IniWrite, % TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time
+        IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, stats, runs
+        IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, stats, chests
+        IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics
+
+        for _, characterClass in classes {
+            for _, data_type in data_types {
+                if (InStr(data_type, "total"))
+                {
+                    for _, chestID in chestIDs {
+                        IniWrite, % stats[characterClass data_type][chestID], afk_chest_stats.ini, % characterClass, % data_type "_" chestID
+                    }
+                }
+            }
+        }
+
+        ; for _, characterClass in classes {
+        ;     Loop, % CHESTS.MaxIndex()
+        ;     {
+        ;         chestID := CHESTS[A_Index]
+
+        ;         IniWrite, % stats[characterClass]["TOTAL_CHEST_APPEARANCES"]["" chestID], afk_chest_stats.ini, % characterClass, total_appearances_%chestID%
+        ;         IniWrite, % stats[characterClass]["TOTAL_SUCCESSFUL_PICKUPS"]["" chestID], afk_chest_stats.ini, % characterClass, total_success_%chestID%
+        ;     }
+        ; }
+    }
+}
+
 draw_crosshair( x:=0, y:=0 )
 {   
     CrosshairColor := 0x0000FF ; Red
@@ -1342,6 +1448,7 @@ draw_crosshair( x:=0, y:=0 )
     user_input_OK:
         Gui, user_input: Submit
         CHARACTER_TYPE := ClassChoice
+        update_chest_ui()
         AACHEN_CHOICE := AachenChoice
         ; GUARDIAN = 1 if positionchoice is top, 2 if middle, and 3 if bottom
         if (PositionChoice == "top")
