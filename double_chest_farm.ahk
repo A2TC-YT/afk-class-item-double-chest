@@ -16,8 +16,7 @@ if InStr(A_ScriptDir, "appdata")
 pToken := Gdip_Startup()
 
 global GUARDIAN := 3 ; position on the character select screen
-global CHARACTER_TYPE := "titan" ; can be "hunter", "titan", or "warlock"
-global CLASSES := ["hunter", "titan", "warlock"]
+global CHARACTER_TYPE := "" ; can be "hunter", "titan", or "warlock"
 global AACHEN_CHOICE := "kinetic"
 ; will be coordinates of destinys client area (actual game window not including borders)
 global DESTINY_X := 0
@@ -90,8 +89,8 @@ Gui, user_input: Show
     global current_exotic_drop_rate_ui := new Overlay("current_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 270, 1, 16, False, 0xFFFFFF) 
     global current_average_loop_time_ui := new Overlay("current_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 300, 1, 16, False, 0xFFFFFF) 
     global current_missed_chests_percent_ui := new Overlay("current_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 330, 1, 16, False, 0xFFFFFF) 
-    global current_chest_counters1 := new Overlay("current_chest_counters1", "21:[###/###]  20:[###/###]  17:[###/###]", -340, 360, 4, 10, False, 0xFFFFFF) 
-    global current_chest_counters2 := new Overlay("current_chest_counters2", "19:[###/###]  18:[###/###]  16:[###/###]", -340, 380, 4, 10, False, 0xFFFFFF) 
+    global current_chest_counters1 := new Overlay("current_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 360, 4, 10, False, 0xFFFFFF) 
+    global current_chest_counters2 := new Overlay("current_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 380, 4, 10, False, 0xFFFFFF) 
     current_time_afk_ui.toggle_visibility("show")
     current_runs_ui.toggle_visibility("show")
     current_chests_ui.toggle_visibility("show")
@@ -109,8 +108,8 @@ Gui, user_input: Show
     global total_exotic_drop_rate_ui := new Overlay("total_exotic_drop_rate_ui", "Exotic Drop Rate - 0.00%", -340, 575, 1, 16, False, 0xFFFFFF) 
     global total_average_loop_time_ui := new Overlay("total_average_loop_time_ui", "Average Loop Time - 0:00.00", -340, 605, 1, 16, False, 0xFFFFFF) 
     global total_missed_chests_percent_ui := new Overlay("total_missed_chests_percent_ui", "Percent Chests Missed - 0.00%", -340, 635, 1, 16, False, 0xFFFFFF) 
-    global total_chest_counters1 := new Overlay("total_chest_counters1", "21:[###/###]  20:[###/###]  17:[###/###]", -340, 665, 4, 10, False, 0xFFFFFF) 
-    global total_chest_counters2 := new Overlay("total_chest_counters2", "19:[###/###]  18:[###/###]  16:[###/###]", -340, 685, 4, 10, False, 0xFFFFFF) 
+    global total_chest_counters1 := new Overlay("total_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 665, 4, 10, False, 0xFFFFFF) 
+    global total_chest_counters2 := new Overlay("total_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 685, 4, 10, False, 0xFFFFFF) 
     total_time_afk_ui.toggle_visibility("show")
     total_runs_ui.toggle_visibility("show")
     total_chests_ui.toggle_visibility("show")
@@ -127,36 +126,23 @@ Gui, user_input: Show
     global TOTAL_RUNS := 0
     global TOTAL_CHESTS := 0
     global TOTAL_EXOTICS := 0
-    
-    global CHESTS := ["21", "20", "17", "19", "18", "16"]
-    global CURRENT_CHEST_APPEARANCES := {"21": 0, "20": 0, "17": 0, "19": 0, "18": 0, "16": 0}
-    global TOTAL_CHEST_APPEARANCES := {"21": 0, "20": 0, "17": 0, "19": 0, "18": 0, "16": 0}
-    global CURRENT_SUCCESSFUL_PICKUPS := {"21": 0, "20": 0, "17": 0, "19": 0, "18": 0, "16": 0}
-    global TOTAL_SUCCESSFUL_PICKUPS := {"21": 0, "20": 0, "17": 0, "19": 0, "18": 0, "16": 0}
+
+    global classes := ["hunter", "titan", "warlock"]
+    global data_types := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
+    global chestIDs := ["21", "20", "17", "19", "18", "16"]
+
+    global stats := {}
+
+    for _, characterClass in classes {
+        for _, data_type in data_types {
+            stats[characterClass data_type] := {}
+            for _, chestID in chestIDs {
+                stats[characterClass data_type][chestID] := 0
+            }
+        }
+    }
 
     read_stats()
-
-    update_chest_ui()
-
-    ; TEST CODE
-    ; chest_spots := [0, 0]
-
-    ; chest_spots[1] := 21
-    
-    ; log_chest_appearance(chest_spots[1])
-    ; log_successful_pickup(chest_spots[1])
-
-    ; chest_spots[1] := 20
-    
-    ; log_chest_appearance(chest_spots[1])
-    ; log_successful_pickup(chest_spots[1])
-
-    ; log_chest_appearance(chest_spots[1])
-    ; log_successful_pickup(chest_spots[1])
-
-    ; update_chest_ui()
-
-    ; END TEST
 
     ; update the total ui stuff with loaded stats 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(TOTAL_FARM_TIME, true, true, true, false))
@@ -277,22 +263,22 @@ F3:: ; main hotkey that runs the script
                 continue
             }
             info_ui.update_content("Going to chests - " chest_spawns[1] " and " chest_spawns[2])
-            log_chest_appearance(chest_spawns[1])
+            log_chest("appearance", chest_spawns[1])
             group_5_chest_opened := group_5_chests() ; open chest 21 if its spawned
             if (group_5_chest_opened)
             {
-                log_successful_pickup(chest_spawns[1])
+                log_chest("pickup", chest_spawns[1])
                 CURRENT_CHESTS++
                 remaining_chests--
             }
             update_chest_ui()
             if (chest_spawns[2]) ; open the second chest (one from group 4)
             {
-                log_chest_appearance(chest_spawns[2])
+                log_chest("appearance", chest_spawns[2])
                 group_4_chest_opened := group_4_chests(chest_spawns[2])
                 if (group_4_chest_opened)
                 {
-                    log_successful_pickup(chest_spawns[2])
+                    log_chest("pickup", chest_spawns[2])
                     CURRENT_CHESTS++
                     remaining_chests--
                 }
@@ -848,29 +834,30 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
     return
 }
 
-log_chest_appearance(chestID) {
-    CURRENT_CHEST_APPEARANCES[ "" chestID]++
-    TOTAL_CHEST_APPEARANCES[ "" chestID]++
+log_chest(data, chestID) {
+    for _, data_type in data_types {
+        if (InStr(data_type, data))
+        {
+            stats[CHARACTER_TYPE data_type][chestID]++
+        }
+    }
 }
 
-log_successful_pickup(chestID) {
-    CURRENT_SUCCESSFUL_PICKUPS[ "" chestID]++
-    TOTAL_SUCCESSFUL_PICKUPS[ "" chestID]++
-}
+; global data_types := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
 
 current_counter(id)
 {
-    return chest_counter(id, CURRENT_CHEST_APPEARANCES, CURRENT_SUCCESSFUL_PICKUPS)
+    return chest_counter(id, stats[CHARACTER_TYPE "current_appearances"][id], stats[CHARACTER_TYPE "current_pickups"][id])
 }
 
 total_counter(id)
 {
-    return chest_counter(id, TOTAL_CHEST_APPEARANCES, TOTAL_SUCCESSFUL_PICKUPS)
+    return chest_counter(id, stats[CHARACTER_TYPE "total_appearances"][id], stats[CHARACTER_TYPE "total_pickups"][id])
 }
 
 chest_counter(id, appearances, pickups)
 {
-    return id ":" Format("[{:3}/{:3}]", pickups[ "" id ], appearances[ "" id ])
+    return id ":" Format("[{:3}/{:3}]", pickups, appearances)
 }
 
 update_chest_ui()
@@ -1347,15 +1334,30 @@ read_stats()
         IniRead, TOTAL_RUNS, afk_chest_stats.ini, stats, runs, 0
         IniRead, TOTAL_CHESTS, afk_chest_stats.ini, stats, chests, 0
         IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics, 0
-        Loop, % CHESTS.MaxIndex()
-        {
-            chestID := CHESTS[A_Index]
 
-            IniRead, temp, afk_chest_stats.ini, stats, total_appearances_%chestID%, 0
-            TOTAL_CHEST_APPEARANCES[ "" chestID ] := temp + 0
-            IniRead, temp, afk_chest_stats.ini, stats, total_success_%chestID%, 0
-            TOTAL_SUCCESSFUL_PICKUPS[ "" chestID ] := temp + 0
+        for _, characterClass in classes {
+            for _, data_type in data_types {
+                if (InStr(data_type, "total"))
+                {
+                    for _, chestID in chestIDs {
+                        IniRead, temp, afk_chest_stats.ini, % characterClass, % data_type "_" chestID, 0
+                        stats[characterClass data_type][chestID] := temp
+                    }
+                }
+            }
         }
+
+        ; for _, characterClass in classes {
+        ;     Loop, % CHESTS.MaxIndex()
+        ;     {
+        ;         chestID := CHESTS[A_Index]
+
+        ;         IniRead, temp, afk_chest_stats.ini, characterClass, total_appearances_%chestID%, 0
+        ;         stats[characterClass].TOTAL_CHEST_APPEARANCES[ "" chestID ] := temp + 0
+        ;         IniRead, temp, afk_chest_stats.ini, characterClass, total_success_%chestID%, 0
+        ;         stats[characterClass].TOTAL_SUCCESSFUL_PICKUPS[ "" chestID ] := temp + 0
+        ;     }
+        ; }
     }
     else
     {
@@ -1378,13 +1380,27 @@ write_stats()
         IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, stats, runs
         IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, stats, chests
         IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics
-        Loop, % CHESTS.MaxIndex()
-        {
-            chestID := CHESTS[A_Index]
 
-            IniWrite, % TOTAL_CHEST_APPEARANCES[ "" chestID ], afk_chest_stats.ini, stats, total_appearances_%chestID%
-            IniWrite, % TOTAL_SUCCESSFUL_PICKUPS[ "" chestID ], afk_chest_stats.ini, stats, total_success_%chestID%
+        for _, characterClass in classes {
+            for _, data_type in data_types {
+                if (InStr(data_type, "total"))
+                {
+                    for _, chestID in chestIDs {
+                        IniWrite, % stats[characterClass data_type][chestID], afk_chest_stats.ini, % characterClass, % data_type "_" chestID
+                    }
+                }
+            }
         }
+
+        ; for _, characterClass in classes {
+        ;     Loop, % CHESTS.MaxIndex()
+        ;     {
+        ;         chestID := CHESTS[A_Index]
+
+        ;         IniWrite, % stats[characterClass]["TOTAL_CHEST_APPEARANCES"]["" chestID], afk_chest_stats.ini, % characterClass, total_appearances_%chestID%
+        ;         IniWrite, % stats[characterClass]["TOTAL_SUCCESSFUL_PICKUPS"]["" chestID], afk_chest_stats.ini, % characterClass, total_success_%chestID%
+        ;     }
+        ; }
     }
 }
 ; user input gui 
@@ -1393,6 +1409,7 @@ write_stats()
     user_input_OK:
         Gui, user_input: Submit
         CHARACTER_TYPE := ClassChoice
+        update_chest_ui()
         AACHEN_CHOICE := AachenChoice
         ; GUARDIAN = 1 if positionchoice is top, 2 if middle, and 3 if bottom
         if (PositionChoice == "top")
