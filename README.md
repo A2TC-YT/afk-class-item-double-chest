@@ -64,7 +64,7 @@ If you like this macro and want to support my work, you can do so on [Ko-Fi](htt
    - Make sure you have [AutoHotkey](https://www.autohotkey.com/) installed on your computer. If you don't have it, download and install it from the official website.
 
 2. **Download the Latest Release**
-   - Download the latest release of the macro from the [releases page](https://github.com/A2TC-YT/afk-class-item-double-chest/releases/tag/1.2). Once downloaded, unzip the file to a folder of your choice.
+   - Download the latest release of the macro from the [releases page](https://github.com/A2TC-YT/afk-class-item-double-chest/releases/latest). Once downloaded, unzip the file to a folder of your choice.
 
 3. **Ensure Settings Match**
    - Before running the macro, ensure all your settings match the ones listed in the "Required Settings" section above. This includes sensitivity, bindings, display settings, and additional settings.
