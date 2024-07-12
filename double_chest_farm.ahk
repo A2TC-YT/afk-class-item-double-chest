@@ -8,11 +8,38 @@ SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
 
-if InStr(A_ScriptDir, "appdata")
-{
-    MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
-    Exitapp  
-}
+; Startup Checks
+; =================================== ;
+    if InStr(A_ScriptDir, "appdata")
+    {
+        MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
+        Exitapp  
+    }
+
+    WinGet, D2PID, PID, ahk_class Tiger D3D Window
+    if(IsAdminProcess(D2PID)) {
+        if not A_IsAdmin {
+            Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
+        }
+    }
+; =================================== ;
+
+; Game Window Initialization
+; =================================== ;
+    ; will be coordinates of destinys client area (actual game window not including borders)
+    global DESTINY_X := 0
+    global DESTINY_Y := 0
+    global DESTINY_WIDTH := 0
+    global DESTINY_HEIGHT := 0
+
+    find_d2()
+
+    if (DESTINY_WIDTH > 1280 || DESTINY_HEIGHT > 720) ; make sure they are actually on windowed mode :D
+    {
+        MsgBox, % "This script is only designed to work with the game in windowed and a resolution of 1280x720. Your resolution is " DESTINY_WIDTH "x" DESTINY_HEIGHT "."
+        ExitApp
+    }
+; =================================== ;
 
 #Include %A_ScriptDir%/overlay_class.ahk
 #Include %A_ScriptDir%/Gdip_all.ahk
@@ -20,47 +47,59 @@ pToken := Gdip_Startup()
 
 global DEBUG := false
 
-global GUARDIAN := 3 ; position on the character select screen
-global CHARACTER_TYPE := "" ; can be "hunter", "titan", or "warlock"
-global AACHEN_CHOICE := "kinetic"
-; will be coordinates of destinys client area (actual game window not including borders)
-global DESTINY_X := 0
-global DESTINY_Y := 0
-global DESTINY_WIDTH := 0
-global DESTINY_HEIGHT := 0
-
-find_d2()
-
-WinGet, D2PID, PID, ahk_class Tiger D3D Window
-if(IsAdminProcess(D2PID)) {
-    if not A_IsAdmin {
-        Run *RunAs "%A_AhkPath%" "%A_ScriptFullPath%"
-    }
-}
-
-OVERLAY_OFFSET_X := DESTINY_X
-OVERLAY_OFFSET_Y := DESTINY_Y
-
-if (DESTINY_WIDTH > 1280 || DESTINY_HEIGHT > 720) ; make sure they are actually on windowed mode :D
-{
-    MsgBox, % "This script is only designed to work with the game in windowed and a resolution of 1280x720. Your resolution is " DESTINY_WIDTH "x" DESTINY_HEIGHT "."
-    ExitApp
-}
-
-; gui to get users character and character position on character select screen
-Gui, user_input: New, , Select class and their position on the character select screen
-Gui, user_input: -Caption -Border +hWnduser_input_hwnd +AlwaysOnTop
-Gui, user_input: Add, Text,, Select Class:
-Gui, user_input: Add, DropDownList, vClassChoice, hunter||warlock|titan
-Gui, user_input: Add, Text,, Select Position:`n(on character select)
-Gui, user_input: Add, DropDownList, vPositionChoice, top||middle|bottom
-Gui, user_input: Add, Text,, Which Aachen do you have:
-Gui, user_input: Add, DropDownList, vAachenChoice, kinetic||void
-Gui, user_input: Add, Button, guser_input_OK Default, OK
-Gui, user_input: Show
-
-; GUI stuff 
+; Data Initialization
 ; =================================== ;
+    global CURRENT_GUARDIAN := "Hunter"
+    global CLASSES := ["Hunter", "Titan", "Warlock"]
+    global CHARACTER_SLOTS := ["Top", "Middle", "Bottom"]
+    global AACHEN_CHOICES := ["Kinetic", "Void"]
+    global STAT_TYPES := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
+    global CHEST_IDS := ["21", "20", "17", "19", "18", "16"]
+
+    global CLASS_SETTINGS := {}
+    global CHEST_STATS := {}
+
+    for _, class_type in CLASSES {
+        CLASS_SETTINGS[class_type] := { "Slot": "Top", "Aachen": "Kinetic" }
+    }
+
+    for _, class_type in CLASSES {
+        for _, stat_type in STAT_TYPES {
+            CHEST_STATS[class_type stat_type] := {}
+            for _, chest_id in CHEST_IDS {
+                CHEST_STATS[class_type stat_type][chest_id] := 0
+            }
+        }
+    }
+
+    read_ini()
+; =================================== ;
+
+; Popup Dialog
+; =================================== ;
+    classDropdown := build_dropdown_string(CLASSES, CURRENT_GUARDIAN)
+    slotDropdown := build_dropdown_string(CHARACTER_SLOTS, CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"])
+    aachenDropdown := build_dropdown_string(AACHEN_CHOICES, CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"])
+    ; gui to get users character and character slot on character select screen
+    Gui, user_input: New, , Select class and their slot on the character select screen
+    Gui, user_input: -Caption -Border +hWnduser_input_hwnd +AlwaysOnTop
+    Gui, user_input: Add, Text,, Select Class:
+    Gui, user_input: Add, DropDownList, vClassChoice gClassChoiceChanged, % classDropdown
+    Gui, user_input: Add, Text,, Select Slot:`n(on character select)
+    Gui, user_input: Add, DropDownList, vSlotChoice, % slotDropdown
+    Gui, user_input: Add, Text,, Which Aachen do you have:
+    Gui, user_input: Add, DropDownList, vAachenChoice, % aachenDropdown
+    Gui, user_input: Add, Button, guser_input_OK Default, OK
+    Gui, user_input: Add, Checkbox, x+30 yp+5 vDebugChoice, Debug
+    Gui, user_input: Show
+; =================================== ;
+
+; Stats GUI
+; =================================== ;
+    ; Offsets for Overlay class
+    OVERLAY_OFFSET_X := DESTINY_X
+    OVERLAY_OFFSET_Y := DESTINY_Y
+
     ; background for all the stats
     Gui, info_BG: +E0x20 -Caption -Border +hWndExtraInfoBGGUI +ToolWindow
     Gui, info_BG: Color, 292929
@@ -111,23 +150,6 @@ Gui, user_input: Show
     global TOTAL_CHESTS := 0
     global TOTAL_EXOTICS := 0
 
-    global classes := ["hunter", "titan", "warlock"]
-    global data_types := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
-    global chestIDs := ["21", "20", "17", "19", "18", "16"]
-
-    global stats := {}
-
-    for _, characterClass in classes {
-        for _, data_type in data_types {
-            stats[characterClass data_type] := {}
-            for _, chestID in chestIDs {
-                stats[characterClass data_type][chestID] := 0
-            }
-        }
-    }
-
-    read_stats()
-
     ; update the total ui stuff with loaded stats 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(TOTAL_FARM_TIME, true, true, true, false))
     total_runs_ui.update_content("Runs - " TOTAL_RUNS)
@@ -152,42 +174,41 @@ Gui, user_input: Show
     global EXOTIC_DROP := false
 ; =================================== ;
 
-; getting users keybinds 
-keys_we_press := [
-    ,"hold_zoom"
-    ,"primary_weapon"
-    ,"special_weapon"
-    ,"heavy_weapon"
-    ,"move_forward"
-    ,"move_backward"
-    ,"move_left"
-    ,"move_right"
-    ,"jump"
-    ,"toggle_sprint"
-    ,"interact"
-    ,"ui_open_director" ; map
-    ,"ui_open_start_menu_settings_tab"]
+; Keybind loading
+; =================================== ; 
+    keys_we_press := [
+        ,"hold_zoom"
+        ,"primary_weapon"
+        ,"special_weapon"
+        ,"heavy_weapon"
+        ,"move_forward"
+        ,"move_backward"
+        ,"move_left"
+        ,"move_right"
+        ,"jump"
+        ,"toggle_sprint"
+        ,"interact"
+        ,"ui_open_director" ; map
+        ,"ui_open_start_menu_settings_tab"]
 
-global key_binds := get_d2_keybinds(keys_we_press) ; this gives us a dictionary of keybinds
+    global key_binds := get_d2_keybinds(keys_we_press) ; this gives us a dictionary of keybinds
 
-for key, value in key_binds ; make sure the keybinds are set (except for settings, dont technically need that one but having it bound speeds it up)
-{
-    if (!value)
+    for key, value in key_binds ; make sure the keybinds are set (except for settings, dont technically need that one but having it bound speeds it up)
     {
-        if (key != "ui_open_start_menu_settings_tab")
+        if (!value)
         {
-            MsgBox, % "You need to set the keybind for " key " in the game settings."
-            ExitApp
+            if (key != "ui_open_start_menu_settings_tab")
+            {
+                MsgBox, % "You need to set the keybind for " key " in the game settings."
+                ExitApp
+            }
         }
     }
-}
+; =================================== ;
 
-; dont start this timer until user has submitted the gui
-; SetTimer, check_tabbed_out, 1000
+Return
 
-return
-
-; hotkeys
+; Hotkeys
 ; =================================== ;
 
 ; hotkey to help make menuing while devving
@@ -199,14 +220,14 @@ F3:: ; main hotkey that runs the script
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
     set_fireteam_privacy("closed")
     Sleep, 1000
-    change_character(GUARDIAN)
+    change_character(CURRENT_GUARDIAN)
     Sleep, 500
     loop, ; loop until we actually load in lol
     {
         if (orbit_landing())
             break
         Sleep, 500
-        change_character(GUARDIAN)
+        change_character(CURRENT_GUARDIAN)
         Sleep, 500
     }
     CURRENT_FARM_START_TIME := A_TickCount
@@ -231,7 +252,7 @@ F3:: ; main hotkey that runs the script
             WinActivate, ahk_exe destiny2.exe ; really make sure we are tabbed in
             info_ui.update_content("Waiting for chest spawns")
             Sleep, 1000
-            if (AACHEN_CHOICE == "kinetic")
+            if (CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"] == "Kinetic")
                 Send, % "{" key_binds["primary_weapon"] "}" ; make sure aachen is equipped
             else 
                 Send, % "{" key_binds["special_weapon"] "}"
@@ -296,14 +317,14 @@ F3:: ; main hotkey that runs the script
         }
         info_ui.update_content("Orbit and relaunch") ; opened 40 chests, time to orbit and relaunch
         WinActivate, ahk_exe destiny2.exe ; one more for good measure
-        change_character(GUARDIAN)
+        change_character(CURRENT_GUARDIAN)
         Sleep, 500
         loop, ; same thing as start, go until we actually start loading in
         {
             if (orbit_landing())
                 break
             Sleep, 500
-            change_character(GUARDIAN)
+            change_character(CURRENT_GUARDIAN)
             Sleep, 500
         }
         Sleep, 30000
@@ -323,7 +344,7 @@ F6::
     for key, value in key_binds 
         send, % "{" value " Up}"
     ; save all the stats to the afk_chest_stats.ini file
-    write_stats()
+    write_ini()
     Reload
     return
 }
@@ -333,7 +354,7 @@ F5:: ; same thing but close the script
     for key, value in key_binds 
         send, % "{" value " Up}"
     ; save all the stats to the afk_chest_stats.ini file
-    write_stats()
+    write_ini()
     ExitApp
 }
 
@@ -342,10 +363,10 @@ F5:: ; same thing but close the script
 ;     GoSub, check_for_exotic_drop
 ;     return
 ; }
-
-; in game functions
 ; =================================== ;
 
+; Chest Functions
+; =================================== ;
 force_first_chest() ; walk to the corner to guarantee chest 21 spawns, also calls find_chests to, yknow, find teh chests :P
 {   
     WinActivate, ahk_exe destiny2.exe
@@ -524,7 +545,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
     PreciseSleep(200)
     if (chest_number == 20)
     {
-        if (CHARACTER_TYPE == "hunter")
+        if (CURRENT_GUARDIAN == "Hunter")
         {
             DllCall("mouse_event", uint, 1, int, 2535, int, 400)
             Send, % "{" key_binds["jump"] " Down}"
@@ -553,7 +574,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
-        else if (CHARACTER_TYPE == "warlock")
+        else if (CURRENT_GUARDIAN == "Warlock")
         {
             DllCall("mouse_event", uint, 1, int, 2535, int, 400)
             Send, % "{" key_binds["jump"] "}"
@@ -604,7 +625,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
     }
     else if (chest_number == 17)
     {
-        if (CHARACTER_TYPE == "hunter")
+        if (CURRENT_GUARDIAN == "Hunter")
         {
             DllCall("mouse_event", uint, 1, int, -3350, int, 400)
             Send, % "{" key_binds["move_forward"] " Down}"
@@ -632,7 +653,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
-        else if (CHARACTER_TYPE == "warlock")
+        else if (CURRENT_GUARDIAN == "Warlock")
         {
             DllCall("mouse_event", uint, 1, int, -3350, int, 400)
             Send, % "{" key_binds["move_forward"] " Down}"
@@ -679,7 +700,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
     }
     else if (chest_number == 19)
     {
-        if (CHARACTER_TYPE == "hunter")
+        if (CURRENT_GUARDIAN == "Hunter")
         {
             DllCall("mouse_event", uint, 1, int, -1410, int, 400)
             Send, % "{" key_binds["move_forward"] " Down}"
@@ -708,7 +729,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1300)
             Send, % "{" key_binds["interact"] " Up}"
         }
-        else if (CHARACTER_TYPE == "warlock")
+        else if (CURRENT_GUARDIAN == "Warlock")
         {
             DllCall("mouse_event", uint, 1, int, -1410, int, 400)
             Send, % "{" key_binds["move_forward"] " Down}"
@@ -827,25 +848,24 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
     return
 }
 
-log_chest(data, chestID) {
-    for _, data_type in data_types {
-        if (InStr(data_type, data))
+log_chest(data, chest_id)
+{
+    for _, stat_type in STAT_TYPES {
+        if (InStr(stat_type, data))
         {
-            stats[CHARACTER_TYPE data_type][chestID]++
+            CHEST_STATS[CURRENT_GUARDIAN stat_type][chest_id]++
         }
     }
 }
 
-; global data_types := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
-
 current_counter(id)
 {
-    return chest_counter(id, stats[CHARACTER_TYPE "current_appearances"][id], stats[CHARACTER_TYPE "current_pickups"][id])
+    return chest_counter(id, CHEST_STATS[CURRENT_GUARDIAN "current_appearances"][id], CHEST_STATS[CURRENT_GUARDIAN "current_pickups"][id])
 }
 
 total_counter(id)
 {
-    return chest_counter(id, stats[CHARACTER_TYPE "total_appearances"][id], stats[CHARACTER_TYPE "total_pickups"][id])
+    return chest_counter(id, CHEST_STATS[CURRENT_GUARDIAN "total_appearances"][id], CHEST_STATS[CURRENT_GUARDIAN "total_pickups"][id])
 }
 
 chest_counter(id, appearances, pickups)
@@ -864,6 +884,8 @@ update_chest_ui()
     total_chest_counters2.update_content(total_counter(19) "  " total_counter(18) "  " total_counter(16))
 }
 
+; Load Zone Functions
+; =================================== ;
 reload_landing() ; in the name innit
 {
     loop, 5
@@ -938,10 +960,10 @@ orbit_landing() ; loads into the landing from orbit
     }
     return false ; 5 fuckups in a row and it fails
 }
-
-; destiny helper functions
 ; =================================== ;
 
+; Destiny Helper Functions
+; =================================== ;
 change_character(character)
 {
     if (!key_binds["ui_open_start_menu_settings_tab"]) ; if no settings keybind use f1 :D (slower)
@@ -972,19 +994,19 @@ change_character(character)
             break
     }
     Sleep, 2000
-    if (character == 1)
+    if (CLASS_SETTINGS[character]["Slot"] == "Top")
     {
         d2_click(900, 304, 0)
         Sleep, 100
         d2_click(900, 304)
     }
-    else if (character == 2)
+    else if (CLASS_SETTINGS[character]["Slot"] == "Middle")
     {
         d2_click(885, 379, 0)
         Sleep, 100
         d2_click(885, 379)
     }
-    else if (character == 3)
+    else if (CLASS_SETTINGS[character]["Slot"] == "Bottom")
     {
         d2_click(902, 448, 0)
         Sleep, 100
@@ -995,11 +1017,13 @@ change_character(character)
     search_start := A_TickCount
     while (true) ; wait for screen to be not black (just checking 3 random pixels)
     {
-        PixelGetColor, pixel_color_1, % DESTINY_X+50, % DESTINY_Y+50, RGB
-        PixelGetColor, pixel_color_2, % DESTINY_X+100, % DESTINY_Y+100, RGB
-        PixelGetColor, pixel_color_3, % DESTINY_X+400, % DESTINY_Y+400, RGB
-        if (pixel_color_1 != 0x000000 && pixel_color_2 != 0x000000 && pixel_color_3 != 0x000000 || A_TickCount - search_start > 90000)
+        if ((!check_pixel([0x000000], 50, 50) &&
+            !check_pixel([0x000000], 100, 100) &&
+            !check_pixel([0x000000], 400, 400))
+            || A_TickCount - search_start > 90000)
+        {
             break
+        }
     }
     return
 }
@@ -1092,20 +1116,13 @@ wait_for_spawn(time_out:=300000) ; waits for spawn in by checking for heavy ammo
     start_time := A_TickCount
     loop,
     {
-        PixelGetColor, pixel_color, 65+DESTINY_X, 60+DESTINY_Y, RGB ; raid logo
-        if (pixel_color == 0xFFFFFF)
+        if(check_pixel([0xFFFFFF], 65, 60)) ; raid logo
             return true
         Sleep, 10
-        PixelGetColor, pixel_color, 85+DESTINY_X, 84+DESTINY_Y, RGB ; minimap
-        if (pixel_color == 0x6F98CB)
+        if(check_pixel([0x6F98CB], 85, 84)) ; minimap
             return true
         Sleep, 10
-        PixelGetColor, pixel_color, 387+DESTINY_X, 667+DESTINY_Y, RGB ; heavy ammo
-        if (DEBUG)
-            draw_crosshair(387+DESTINY_X, 667+DESTINY_Y)
-        if (pixel_color == 0xC19AFF)
-            return true
-        if (pixel_color == 0xC299FF)
+        if(check_pixel([0xC19AFF, 0xC299FF], 387, 667)) ; heavy ammo
             return true
         Sleep, 10
         if (A_TickCount - start_time > time_out) ; times out eventually so we dont get stuck forever
@@ -1113,10 +1130,10 @@ wait_for_spawn(time_out:=300000) ; waits for spawn in by checking for heavy ammo
     }
     return true
 }
-
-; helper functions
 ; =================================== ;
 
+; Color Functions
+; =================================== ;
 simpleColorCheck(coords, w, h) ; bad function to check for pixels that are "white enough" in a given area
 {
     ; convert the coords to be relative to destiny 
@@ -1182,6 +1199,28 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
 
 }
 
+check_pixel( allowed_colors, pixel_x, pixel_y )
+{
+    pixel_x := pixel_x + DESTINY_X
+    pixel_y := pixel_x + DESTINY_Y
+
+    PixelGetColor, pixel_color, pixel_x, pixel_y, RGB
+    found := false
+    for _, color in allowed_colors {
+        if (pixel_color == color) {
+            found := true
+        }
+    }
+
+    if (DEBUG)
+        draw_crosshair(pixel_x, pixel_y)
+
+    return found
+}
+; =================================== ;
+
+; Other Functions
+; =================================== ;
 find_d2() ; find the client area of d2
 {
     ; Detect the Destiny 2 game window
@@ -1301,7 +1340,8 @@ get_d2_keybinds(k) ; very readable function that parses destiny 2 cvars file for
     return b
 }
 
-IsAdminProcess(pid) {
+IsAdminProcess(pid)
+{
     hProcess := DllCall("OpenProcess", "UInt", 0x1000, "Int", False, "UInt", pid, "Ptr")
     if (!hProcess)
         return False
@@ -1323,46 +1363,35 @@ IsAdminProcess(pid) {
     return NumGet(TOKEN_ELEVATION, 0) != 0
 }
 
-read_stats()
+read_ini()
 {
-    ; check if there is a file called `afk_chest_stats.txt` and if so, load the stats from it
+    ; check if there is a file called `afk_chest_stats.ini` and if so, load the stats from it
     if (FileExist("afk_chest_stats.ini")) {
+        IniRead, CURRENT_GUARDIAN, afk_chest_stats.ini, stats, last_guardian, Hunter
         IniRead, TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time, 0
         IniRead, TOTAL_RUNS, afk_chest_stats.ini, stats, runs, 0
         IniRead, TOTAL_CHESTS, afk_chest_stats.ini, stats, chests, 0
         IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics, 0
 
-        for _, characterClass in classes {
-            for _, data_type in data_types {
-                if (InStr(data_type, "total"))
+        for _, class_type in CLASSES {
+            for _, stat_type in STAT_TYPES {
+                if (InStr(stat_type, "total"))
                 {
-                    for _, chestID in chestIDs {
-                        IniRead, temp, afk_chest_stats.ini, % characterClass, % data_type "_" chestID, 0
-                        stats[characterClass data_type][chestID] := temp
+                    for _, chest_id in CHEST_IDS {
+                        IniRead, temp, afk_chest_stats.ini, % class_type, % stat_type "_" chest_id, 0
+                        CHEST_STATS[class_type stat_type][chest_id] := temp
                     }
                 }
             }
+            IniRead, temp, afk_chest_stats.ini, % class_type, Slot, Top
+            CLASS_SETTINGS[class_type]["Slot"] := temp
+            IniRead, temp, afk_chest_stats.ini, % class_type, Aachen, Kinetic
+            CLASS_SETTINGS[class_type]["Aachen"] := temp
         }
-
-        ; for _, characterClass in classes {
-        ;     Loop, % CHESTS.MaxIndex()
-        ;     {
-        ;         chestID := CHESTS[A_Index]
-
-        ;         IniRead, temp, afk_chest_stats.ini, characterClass, total_appearances_%chestID%, 0
-        ;         stats[characterClass].TOTAL_CHEST_APPEARANCES[ "" chestID ] := temp + 0
-        ;         IniRead, temp, afk_chest_stats.ini, characterClass, total_success_%chestID%, 0
-        ;         stats[characterClass].TOTAL_SUCCESSFUL_PICKUPS[ "" chestID ] := temp + 0
-        ;     }
-        ; }
-    }
-    else
-    {
-        FileAppend, 0`n0`n0`n0`n0`n0, afk_chest_stats.txt
     }
 }
 
-write_stats()
+write_ini()
 {
     if (CURRENT_FARM_START_TIME)
     {
@@ -1373,31 +1402,23 @@ write_stats()
         TOTAL_EXOTICS := TOTAL_EXOTICS + CURRENT_EXOTICS
 
         ; Write the updated totals to the ini file
-        IniWrite, % TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time
-        IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, stats, runs
-        IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, stats, chests
-        IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics
+        IniWrite, % TOTAL_FARM_TIME, afk_chest_stats.ini, Stats, Time
+        IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, Stats, Runs
+        IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, Stats, Chests
+        IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, Stats, Exotics
 
-        for _, characterClass in classes {
-            for _, data_type in data_types {
-                if (InStr(data_type, "total"))
+        for _, class_type in CLASSES {
+            for _, stat_type in STAT_TYPES {
+                if (InStr(stat_type, "total"))
                 {
-                    for _, chestID in chestIDs {
-                        IniWrite, % stats[characterClass data_type][chestID], afk_chest_stats.ini, % characterClass, % data_type "_" chestID
+                    for _, chest_id in CHEST_IDS {
+                        IniWrite, % CHEST_STATS[class_type stat_type][chest_id], afk_chest_stats.ini, % class_type, % stat_type "_" chest_id
                     }
                 }
             }
+            IniWrite, % CLASS_SETTINGS[class_type]["Slot"], afk_chest_stats.ini, % class_type, Slot
+            IniWrite, % CLASS_SETTINGS[class_type]["Aachen"], afk_chest_stats.ini, % class_type, Aachen
         }
-
-        ; for _, characterClass in classes {
-        ;     Loop, % CHESTS.MaxIndex()
-        ;     {
-        ;         chestID := CHESTS[A_Index]
-
-        ;         IniWrite, % stats[characterClass]["TOTAL_CHEST_APPEARANCES"]["" chestID], afk_chest_stats.ini, % characterClass, total_appearances_%chestID%
-        ;         IniWrite, % stats[characterClass]["TOTAL_SUCCESSFUL_PICKUPS"]["" chestID], afk_chest_stats.ini, % characterClass, total_success_%chestID%
-        ;     }
-        ; }
     }
 }
 
@@ -1477,21 +1498,37 @@ check_tabbed_out:
     }
 }
 
-; user input gui 
+; Popup Dialog Functions
 ; =================================== ;
+    build_dropdown_string(options, selected) {
+        dropdown := ""
+        for index, option in options {
+            if (option = selected)
+                dropdown .= option "||"
+            else
+                dropdown .= option "|"
+        }
+        return dropdown
+    }
+
+    ; Handle ClassChoice change
+    ClassChoiceChanged:
+        Gui, user_input: Submit, NoHide
+        CURRENT_GUARDIAN := ClassChoice        
+        slotDropdown := build_dropdown_string(CHARACTER_SLOTS, CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"])
+        aachenDropdown := build_dropdown_string(AACHEN_CHOICES, CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"])
+        GuiControl,, SlotChoice, % "|" slotDropdown
+        GuiControl,, AachenChoice, % "|" aachenDropdown
+    return
+
     ; Handle OK button click
     user_input_OK:
         Gui, user_input: Submit
-        CHARACTER_TYPE := ClassChoice
+        CURRENT_GUARDIAN := ClassChoice
+        CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"] := SlotChoice
+        CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"] := AachenChoice
+        DEBUG := DebugChoice
         update_chest_ui()
-        AACHEN_CHOICE := AachenChoice
-        ; GUARDIAN = 1 if positionchoice is top, 2 if middle, and 3 if bottom
-        if (PositionChoice == "top")
-            GUARDIAN := 1
-        else if (PositionChoice == "middle")
-            GUARDIAN := 2
-        else if (PositionChoice == "bottom")
-            GUARDIAN := 3
         Gui, user_input: Destroy
         SetTimer, check_tabbed_out, 200
     return
