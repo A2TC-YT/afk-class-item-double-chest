@@ -31,6 +31,7 @@ SetMouseDelay, -1
     global DESTINY_Y := 0
     global DESTINY_WIDTH := 0
     global DESTINY_HEIGHT := 0
+    global D2_WINDOW_HANDLE := -1
 
     find_d2()
 
@@ -172,6 +173,8 @@ global DEBUG := false
     ; other global vars
     global CHEST_OPENED := false
     global EXOTIC_DROP := false
+
+    update_chest_ui()
 ; =================================== ;
 
 ; Keybind loading
@@ -1202,7 +1205,7 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
 check_pixel( allowed_colors, pixel_x, pixel_y )
 {
     pixel_x := pixel_x + DESTINY_X
-    pixel_y := pixel_x + DESTINY_Y
+    pixel_y := pixel_y + DESTINY_Y
 
     PixelGetColor, pixel_color, pixel_x, pixel_y, RGB
     found := false
@@ -1225,7 +1228,8 @@ find_d2() ; find the client area of d2
 {
     ; Detect the Destiny 2 game window
     WinGet, Destiny2ID, ID, ahk_exe destiny2.exe
-
+    D2_WINDOW_HANDLE := Destiny2ID
+    
     ; Get the dimensions of the game window's client area
     WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
     if(Y < 1) {
@@ -1519,6 +1523,7 @@ check_tabbed_out:
         aachenDropdown := build_dropdown_string(AACHEN_CHOICES, CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"])
         GuiControl,, SlotChoice, % "|" slotDropdown
         GuiControl,, AachenChoice, % "|" aachenDropdown
+        update_chest_ui()
     return
 
     ; Handle OK button click
@@ -1529,6 +1534,7 @@ check_tabbed_out:
         CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"] := AachenChoice
         DEBUG := DebugChoice
         update_chest_ui()
+        WinActivate, ahk_id %D2_WINDOW_HANDLE%
         Gui, user_input: Destroy
         SetTimer, check_tabbed_out, 200
     return
