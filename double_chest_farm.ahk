@@ -295,9 +295,12 @@ F3:: ; main hotkey that runs the script
                 }
                 update_chest_ui()
             }
-            info_ui.update_content("Relaunching Landing")
             WinActivate, ahk_exe destiny2.exe ; make absolutely, positively, certain we are tabbed in
-            reload_landing()
+            if (!(remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20)))
+            {
+                info_ui.update_content("Relaunching Landing")
+                reload_landing()
+            }
             CURRENT_RUNS++
             total_runs_ui.update_content("Runs: " TOTAL_RUNS+CURRENT_RUNS)
             current_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((A_TickCount-CURRENT_FARM_START_TIME)/CURRENT_RUNS, false, true, true, true, 2))
