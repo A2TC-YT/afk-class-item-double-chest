@@ -990,7 +990,7 @@ change_character(character)
     d2_click(1030, 165, 0)
     Sleep, 150
     d2_click(1030, 165)
-    Sleep, 300
+    Sleep, 500
     Send, {Enter}
     Sleep, 5000
     search_start := A_TickCount
