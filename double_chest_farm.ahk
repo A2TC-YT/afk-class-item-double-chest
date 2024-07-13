@@ -1374,11 +1374,11 @@ read_ini()
 {
     ; check if there is a file called `afk_chest_stats.ini` and if so, load the stats from it
     if (FileExist("afk_chest_stats.ini")) {
-        IniRead, CURRENT_GUARDIAN, afk_chest_stats.ini, stats, last_guardian, Hunter
-        IniRead, TOTAL_FARM_TIME, afk_chest_stats.ini, stats, time, 0
-        IniRead, TOTAL_RUNS, afk_chest_stats.ini, stats, runs, 0
-        IniRead, TOTAL_CHESTS, afk_chest_stats.ini, stats, chests, 0
-        IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, stats, exotics, 0
+        IniRead, CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian, Hunter
+        IniRead, TOTAL_FARM_TIME, afk_chest_stats.ini, Stats, Time, 0
+        IniRead, TOTAL_RUNS, afk_chest_stats.ini, Stats, Runs, 0
+        IniRead, TOTAL_CHESTS, afk_chest_stats.ini, Stats, Chests, 0
+        IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, Stats, Exotics, 0
 
         for _, class_type in CLASSES {
             for _, stat_type in STAT_TYPES {
@@ -1402,6 +1402,8 @@ write_ini()
 {
     if (CURRENT_FARM_START_TIME)
     {
+        IniWrite, % CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian
+
         ; Calculate the updated totals
         TOTAL_FARM_TIME += A_TickCount - CURRENT_FARM_START_TIME
         TOTAL_RUNS := TOTAL_RUNS + CURRENT_RUNS
