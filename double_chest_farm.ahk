@@ -7,6 +7,7 @@ SetWorkingDir, %A_ScriptDir%
 SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
+OnExit("write_ini")
 
 ; Startup Checks
 ; =================================== ;
