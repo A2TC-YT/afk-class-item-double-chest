@@ -1510,8 +1510,6 @@ script_close:
     {
         for key, value in key_binds 
             send, % "{" value " Up}"
-        ; save all the stats to the afk_chest_stats.ini file
-        write_ini()
         ExitApp
     }
     return
