@@ -46,6 +46,8 @@ SetMouseDelay, -1
 #Include %A_ScriptDir%/Gdip_all.ahk
 pToken := Gdip_Startup()
 
+SetTimer, script_close, 1000
+
 global DEBUG := false
 
 ; Data Initialization
@@ -72,6 +74,21 @@ global DEBUG := false
             }
         }
     }
+
+    ; total stats
+    global TOTAL_FARM_TIME := 0
+    global TOTAL_RUNS := 0
+    global TOTAL_CHESTS := 0
+    global TOTAL_EXOTICS := 0
+    
+    global CURRENT_FARM_START_TIME := 0
+    global CURRENT_RUNS := 0
+    global CURRENT_CHESTS := 0
+    global CURRENT_EXOTICS := 0
+
+    ; other global vars
+    global CHEST_OPENED := false
+    global EXOTIC_DROP := false
 
     read_ini()
 ; =================================== ;
@@ -144,13 +161,6 @@ global DEBUG := false
     show_gui()
     global GUI_VISIBLE := true
 
-    ; fun info global vars
-    ; showing stats
-    global TOTAL_FARM_TIME := 0
-    global TOTAL_RUNS := 0
-    global TOTAL_CHESTS := 0
-    global TOTAL_EXOTICS := 0
-
     ; update the total ui stuff with loaded stats 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(TOTAL_FARM_TIME, true, true, true, false))
     total_runs_ui.update_content("Runs - " TOTAL_RUNS)
@@ -159,20 +169,6 @@ global DEBUG := false
     total_exotic_drop_rate_ui.update_content("Exotic Drop Rate - " Round((TOTAL_EXOTICS/TOTAL_CHESTS*100),2) "%")
     total_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((TOTAL_FARM_TIME)/TOTAL_RUNS, false, true, true, true, 2))
     total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS)/((TOTAL_RUNS)*2))*100, 2) "%")
-
-    global CURRENT_FARM_START_TIME := 0
-    global CURRENT_RUNS := 0
-    global CURRENT_CHESTS := 0
-    global CURRENT_EXOTICS := 0
-
-    ; hidden stats (im too lazy to actually track these rn, but ideally it could be used to identify if one of the chests is more inconsistent than others)
-    global TOTAL_GROUP_4_CHESTS := [0, 0, 0, 0, 0, 0] ; 16, 17, 18, 19, 20, no chest
-    global TOTAL_SUCCESSFUL_GROUP_4_CHESTS := [0, 0, 0, 0, 0]
-    global MESSED_UP_RUNS := 0 
-
-    ; other global vars
-    global CHEST_OPENED := false
-    global EXOTIC_DROP := false
 
     update_chest_ui()
 ; =================================== ;
@@ -1505,6 +1501,19 @@ check_tabbed_out:
         if (GUI_VISIBLE)
             hide_gui()
     }
+}
+
+script_close:
+{
+    IfWinNotExist, Destiny 2
+    {
+        for key, value in key_binds 
+            send, % "{" value " Up}"
+        ; save all the stats to the afk_chest_stats.ini file
+        write_ini()
+        ExitApp
+    }
+    return
 }
 
 ; Popup Dialog Functions
