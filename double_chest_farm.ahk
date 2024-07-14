@@ -1,5 +1,7 @@
 #Requires AutoHotkey v1.1.27+
 #SingleInstance, Force
+#Include *i %A_ScriptDir%/overlay_class.ahk
+#Include *i %A_ScriptDir%/Gdip_all.ahk
 SendMode Input
 CoordMode, Mouse, Screen
 CoordMode, Pixel, Screen
@@ -11,9 +13,15 @@ OnExit("write_ini")
 
 ; Startup Checks
 ; =================================== ;
-	if InStr(A_ScriptDir, "AppData")
+    if InStr(A_ScriptDir, "AppData")
     {
         MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
+        Exitapp  
+    }
+
+	if (!FileExist( A_ScriptDir "/overlay_class.ahk" ) || !FileExist( A_ScriptDir "/Gdip_all.ahk" ))
+    {
+        MsgBox, Required files were not found in the same directory as this script. Place it in the same directory as overlay_class.ahk and Gdip_all.ahk.
         Exitapp  
     }
 
@@ -50,8 +58,6 @@ global dGdip_GetPixel := "Gdip_GetPixel"
 global dGdip_DisposeImage := "Gdip_DisposeImage"
 global dGdip_SaveBitmapToFile := "Gdip_SaveBitmapToFile"
 
-#Include *i %A_ScriptDir%/overlay_class.ahk
-#Include *i %A_ScriptDir%/Gdip_all.ahk
 pToken := %dGdip_Startup%()
 
 global DEBUG := false

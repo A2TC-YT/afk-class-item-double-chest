@@ -1,8 +1,5 @@
 CoordMode, Pixel
-#include %A_ScriptDir%//Gdip_all.ahk
 global overlay_var
-
-overlayToken := Gdip_Startup()
 
 global OVERLAY_OFFSET_X := 0
 global OVERLAY_OFFSET_Y := 0
