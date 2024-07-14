@@ -11,7 +11,7 @@ OnExit("write_ini")
 
 ; Startup Checks
 ; =================================== ;
-    if InStr(A_ScriptDir, "appdata")
+	if InStr(A_ScriptDir, "AppData")
     {
         MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
         Exitapp  
@@ -43,11 +43,16 @@ OnExit("write_ini")
     }
 ; =================================== ;
 
-#Include %A_ScriptDir%/overlay_class.ahk
-#Include %A_ScriptDir%/Gdip_all.ahk
-pToken := Gdip_Startup()
+; (d)ynamic function to allow execution while zipped
+global dGdip_Startup := "Gdip_Startup"
+global dGdip_BitmapFromScreen := "Gdip_BitmapFromScreen"
+global dGdip_GetPixel := "Gdip_GetPixel"
+global dGdip_DisposeImage := "Gdip_DisposeImage"
+global dGdip_SaveBitmapToFile := "Gdip_SaveBitmapToFile"
 
-SetTimer, script_close, 1000
+#Include *i %A_ScriptDir%/overlay_class.ahk
+#Include *i %A_ScriptDir%/Gdip_all.ahk
+pToken := %dGdip_Startup%()
 
 global DEBUG := false
 
@@ -170,6 +175,20 @@ global DEBUG := false
     total_exotic_drop_rate_ui.update_content("Exotic Drop Rate - " Round((TOTAL_EXOTICS/TOTAL_CHESTS*100),2) "%")
     total_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((TOTAL_FARM_TIME)/TOTAL_RUNS, false, true, true, true, 2))
     total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS)/((TOTAL_RUNS)*2))*100, 2) "%")
+
+    global CURRENT_FARM_START_TIME := 0
+    global CURRENT_RUNS := 0
+    global CURRENT_CHESTS := 0
+    global CURRENT_EXOTICS := 0
+
+    ; hidden stats (im too lazy to actually track these rn, but ideally it could be used to identify if one of the chests is more inconsistent than others)
+    global TOTAL_GROUP_4_CHESTS := [0, 0, 0, 0, 0, 0] ; 16, 17, 18, 19, 20, no chest
+    global TOTAL_SUCCESSFUL_GROUP_4_CHESTS := [0, 0, 0, 0, 0]
+    global MESSED_UP_RUNS := 0 
+
+    ; other global vars
+    global CHEST_OPENED := false
+    global EXOTIC_DROP := false
 
     update_chest_ui()
 ; =================================== ;
@@ -1161,9 +1180,9 @@ simpleColorCheck(coords, w, h) ; bad function to check for pixels that are "whit
     x := coords[1] + DESTINY_X
     y := coords[2] + DESTINY_Y
     coords := x "|" y "|" w "|" h
-    pBitmap := Gdip_BitmapFromScreen(coords)
+    pBitmap := %dGdip_BitmapFromScreen%(coords)
     ; save bitmap 
-    ; Gdip_SaveBitmapToFile(pBitmap, A_ScriptDir . "\test.png")
+    ; %dGdip_SaveBitmapToFile%(pBitmap, A_ScriptDir . "\test.png")
     x := 0
     y := 0
     white := 0
@@ -1172,7 +1191,7 @@ simpleColorCheck(coords, w, h) ; bad function to check for pixels that are "whit
     {
         loop %w%
         {
-            color := (Gdip_GetPixel(pBitmap, x, y) & 0x00F0F0F0)
+            color := ( %dGdip_GetPixel%(pBitmap, x, y) & 0x00F0F0F0)
             if (color == 0xF0F0F0)
                 white += 1
             total += 1
@@ -1181,7 +1200,7 @@ simpleColorCheck(coords, w, h) ; bad function to check for pixels that are "whit
         x := 0
         y += 1
     }
-    Gdip_DisposeImage(pBitmap)
+    %dGdip_DisposeImage%(pBitmap)
     pWhite := white/total
     return pWhite
 }
@@ -1193,9 +1212,9 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
     x := coords[1] + DESTINY_X
     y := coords[2] + DESTINY_Y
     coords := x "|" y "|" w "|" h
-    pBitmap := Gdip_BitmapFromScreen(coords)
+    pBitmap := %dGdip_BitmapFromScreen%(coords)
     ; save bitmap 
-    ; Gdip_SaveBitmapToFile(pBitmap, A_ScriptDir . "\test.png")
+    ; %dGdip_SaveBitmapToFile%(pBitmap, A_ScriptDir . "\test.png")
     x := 0
     y := 0
     white := 0
@@ -1204,7 +1223,7 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
     {
         loop %w%
         {
-            color := (Gdip_GetPixel(pBitmap, x, y) & 0x00FFFFFF)
+            color := (%dGdip_GetPixel%(pBitmap, x, y) & 0x00FFFFFF)
             if (color == base_color)
                 white += 1
             total += 1
@@ -1213,7 +1232,7 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
         x := 0
         y += 1
     }
-    Gdip_DisposeImage(pBitmap)
+    %dGdip_DisposeImage%(pBitmap)
     pWhite := white/total
     return pWhite
 
@@ -1292,13 +1311,13 @@ d2_click(x, y, press_button:=1) ; click somewhere on d2
 destiny_screenshot(file_location:="\destiny_screenshot.png") ; take screenshot of just destiny screen, helpful for devving or debugging
 {
     ; Take a screenshot of the Destiny 2 client area
-    pBitmap := Gdip_BitmapFromScreen(DESTINY_X "|" DESTINY_Y "|" DESTINY_WIDTH "|" DESTINY_HEIGHT)
+    pBitmap := %dGdip_BitmapFromScreen%(DESTINY_X "|" DESTINY_Y "|" DESTINY_WIDTH "|" DESTINY_HEIGHT)
 
     ; Save the screenshot to a file
-    Gdip_SaveBitmapToFile(pBitmap, A_ScriptDir . file_location)
+    %dGdip_SaveBitmapToFile%(pBitmap, A_ScriptDir . file_location)
 
     ; Clean up
-    Gdip_DisposeImage(pBitmap)
+    %dGdip_DisposeImage%(pBitmap)
     return
 }
 
