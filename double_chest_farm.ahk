@@ -1265,6 +1265,12 @@ find_d2() ; find the client area of d2
     ; Detect the Destiny 2 game window
     WinGet, Destiny2ID, ID, ahk_exe destiny2.exe
     D2_WINDOW_HANDLE := Destiny2ID
+
+    if (!D2_WINDOW_HANDLE)
+    {
+        MsgBox, Unable to find Destiny 2. Please launch the game and then run the script.
+        ExitApp
+    }
     
     ; Get the dimensions of the game window's client area
     WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
