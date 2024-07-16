@@ -1,5 +1,7 @@
 #Requires AutoHotkey v1.1.27+
 #SingleInstance, Force
+#Include *i %A_ScriptDir%/overlay_class.ahk
+#Include *i %A_ScriptDir%/Gdip_all.ahk
 SendMode Input
 CoordMode, Mouse, Screen
 CoordMode, Pixel, Screen
@@ -11,9 +13,15 @@ OnExit("write_ini")
 
 ; Startup Checks
 ; =================================== ;
-	if InStr(A_ScriptDir, "AppData")
+    if InStr(A_ScriptDir, "AppData")
     {
         MsgBox, You must extract all files from the .zip folder you downloaded before running this script.
+        Exitapp  
+    }
+
+	if (!FileExist( A_ScriptDir "/overlay_class.ahk" ) || !FileExist( A_ScriptDir "/Gdip_all.ahk" ))
+    {
+        MsgBox, Required files were not found in the same directory as this script. Place it in the same directory as overlay_class.ahk and Gdip_all.ahk.
         Exitapp  
     }
 
@@ -50,8 +58,6 @@ global dGdip_GetPixel := "Gdip_GetPixel"
 global dGdip_DisposeImage := "Gdip_DisposeImage"
 global dGdip_SaveBitmapToFile := "Gdip_SaveBitmapToFile"
 
-#Include *i %A_ScriptDir%/overlay_class.ahk
-#Include *i %A_ScriptDir%/Gdip_all.ahk
 pToken := %dGdip_Startup%()
 
 global DEBUG := false
@@ -354,13 +360,6 @@ F3:: ; main hotkey that runs the script
     return
 }
 
-F6::
-{
-    WinGetPos,,, Width, Height, ahk_exe destiny2.exe
-    WinMove, ahk_exe destiny2.exe,, (A_ScreenWidth/2)-(Width/2), (A_ScreenHeight/2)-(Height/2)
-    ; we also want it to reload script so gui is in the right spot
-}
-
 *F4:: ; reload the script, release any possible held keys, save stats
 {
     for key, value in key_binds 
@@ -378,6 +377,15 @@ F5:: ; same thing but close the script
     ; save all the stats to the afk_chest_stats.ini file
     write_ini()
     ExitApp
+}
+
+F6::
+{
+    WinGetPos,,, Width, Height, ahk_exe destiny2.exe
+    WinMove, ahk_exe destiny2.exe,, (A_ScreenWidth/2)-((Width-(350 * dpiInverse))/2), (A_ScreenHeight/2)-(Height/2)
+    Sleep 1000
+    find_d2()
+    ; we also want it to reload script so gui is in the right spot
 }
 
 ; F7:: ; testing hotkey
@@ -914,32 +922,37 @@ reload_landing() ; in the name innit
     {   
         Send, % "{" key_binds["ui_open_director"] "}"
         Sleep, 1400
-        d2_click(20, 381, 0)
+        d2_click(20, 381, 0) ; mouse to drag map and show landing icon
         PreciseSleep(850)
-        d2_click(270, 338, 0)
+        d2_click(270, 338, 0) ; mouse stop drag and hover landing
         Sleep, 100
-        Send, {LButton Down}
+        Send, {LButton Down} ; mouse click landing
         Sleep, 1100
         Send, {LButton Up}
         Sleep, 1000
-        ; check if we are still on the map screen (this means this function fucked up)
-        percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
-        if (percent_white >= 0.3)
+        landingOffset := 0
+        loop, 10
         {
-            d2_click(293, 338, 0) ; try clicking a bit to the side
-            Sleep, 100
-            Send, {LButton Down}
-            Sleep, 1100
-            Send, {LButton Up}
-            Sleep, 1000
+            ; check if we are still on the map screen (this means this function fucked up)
+            percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
+            if (percent_white >= 0.3)
+            {
+                d2_click(270 + landingOffset, 338, 0) ; try clicking a bit to the side
+                Sleep, 100
+                Send, {LButton Down}
+                Sleep, 1100
+                Send, {LButton Up}
+                Sleep, 1000
+            }
             percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
             if (!percent_white >= 0.3) ; we clicked succesfully
                 break
-            Send, % "{" key_binds["ui_open_director"] "}"
-            Sleep, 2000
-            continue ; close map and retry the whole function
+            landingOffset := landingOffset + 25
         }
-        break
+        if (!percent_white >= 0.3) ; we clicked succesfully
+            break
+        Send, % "{" key_binds["ui_open_director"] "}"
+        Sleep, 2000
     }
     return
 }
@@ -954,11 +967,11 @@ orbit_landing() ; loads into the landing from orbit
         Sleep, 500
         d2_click(640, 360)
         Sleep, 1800
-        d2_click(20, 381, 0)
+        d2_click(20, 381, 0) ; mouse to drag map and show landing icon
         PreciseSleep(850)
-        d2_click(270, 338, 0)
+        d2_click(270, 338, 0) ; mouse stop drag and hover landing
         Sleep, 100
-        d2_click(270, 338)
+        d2_click(270, 338) ; mouse click landing
         Sleep, 1500
         percent_white := simpleColorCheck("33|573|24|24", 24, 24)
         if (!percent_white >= 0.4) ; we missed the landing zone
@@ -1133,20 +1146,30 @@ game_restart() ; not used in this script but could be added to allwo it to run t
     return
 }
 
-wait_for_spawn(time_out:=300000) ; waits for spawn in by checking for heavy ammo color and blue blip on minimap
+wait_for_spawn(time_out:=200000) ; waits for spawn in by checking for heavy ammo color and blue blip on minimap
 {
     start_time := A_TickCount
     loop,
     {
-        if(check_pixel([0xFFFFFF], 65, 60)) ; raid logo
-            return true
-        Sleep, 10
-        if(check_pixel([0x6F98CB], 85, 84)) ; minimap
-            return true
-        Sleep, 10
-        if(check_pixel([0xC19AFF, 0xC299FF], 387, 667)) ; heavy ammo
-            return true
-        Sleep, 10
+        x_off := -2
+        loop, 3
+        {
+            y_off := 0
+            loop, 5
+            {
+                if(check_pixel([0xFFFFFF], 65 + x_off, 60 + y_off)) ; raid logo
+                    return true
+                Sleep, 10
+                if(check_pixel([0x6F98CB], 85 + x_off, 84 + y_off)) ; minimap
+                    return true
+                Sleep, 10
+                if(check_pixel([0xC19AFF, 0xC299FF], 387 + x_off, 667 + y_off)) ; heavy ammo
+                    return true
+                Sleep, 10
+                y_off := y_off + 2
+            }
+            x_off := x_off + 1
+        }
         if (A_TickCount - start_time > time_out) ; times out eventually so we dont get stuck forever
             return false
     }
@@ -1248,6 +1271,12 @@ find_d2() ; find the client area of d2
     ; Detect the Destiny 2 game window
     WinGet, Destiny2ID, ID, ahk_exe destiny2.exe
     D2_WINDOW_HANDLE := Destiny2ID
+
+    if (!D2_WINDOW_HANDLE)
+    {
+        MsgBox, Unable to find Destiny 2. Please launch the game and then run the script.
+        ExitApp
+    }
     
     ; Get the dimensions of the game window's client area
     WinGetPos, X, Y, Width, Height, ahk_id %Destiny2ID%
