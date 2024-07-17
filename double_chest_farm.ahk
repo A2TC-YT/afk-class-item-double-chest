@@ -10,6 +10,7 @@ SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
 OnExit("write_ini")
+global VERSION := "v2.0_beta"
 
 ; Startup Checks
 ; =================================== ;
@@ -65,51 +66,57 @@ global DEBUG := false
 ; Data Initialization
 ; =================================== ;
     global CURRENT_GUARDIAN := "Hunter"
+    global TOTALS_DISPLAY := "All"
     global CLASSES := ["Hunter", "Titan", "Warlock"]
     global CHARACTER_SLOTS := ["Top", "Middle", "Bottom"]
     global AACHEN_CHOICES := ["Kinetic", "Void"]
-    global STAT_TYPES := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
+    global CLASS_STAT_TYPES := ["current_runs", "total_runs", "current_exotics", "total_exotics", "current_time", "total_time"]
+    global CHEST_STAT_TYPES := ["current_appearances", "total_appearances", "current_pickups", "total_pickups"]
     global CHEST_IDS := ["21", "20", "17", "19", "18", "16"]
 
-    global CLASS_SETTINGS := {}
-    global CHEST_STATS := {}
+    global PLAYER_DATA := {}
 
     for _, class_type in CLASSES {
-        CLASS_SETTINGS[class_type] := { "Slot": "Top", "Aachen": "Kinetic" }
-    }
-
-    for _, class_type in CLASSES {
-        for _, stat_type in STAT_TYPES {
-            CHEST_STATS[class_type stat_type] := {}
-            for _, chest_id in CHEST_IDS {
-                CHEST_STATS[class_type stat_type][chest_id] := 0
+        PLAYER_DATA[class_type] := {"Settings": {}, "ClassStats": {}, "ChestStats": {}}
+    
+        PLAYER_DATA[class_type]["Settings"]["Slot"] := "Top"
+        PLAYER_DATA[class_type]["Settings"]["Aachen"] := "Kinetic"
+    
+        for _, class_stat_type in CLASS_STAT_TYPES {
+            PLAYER_DATA[class_type]["ClassStats"][class_stat_type] := 0
+        }
+    
+        for _, chest_id in CHEST_IDS {
+            PLAYER_DATA[class_type]["ChestStats"][chest_id] := {}
+            for _, chest_stat_type in CHEST_STAT_TYPES {
+                PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type] := 0
             }
         }
     }
-
-    ; total stats
-    global TOTAL_FARM_TIME := 0
-    global TOTAL_RUNS := 0
-    global TOTAL_CHESTS := 0
-    global TOTAL_EXOTICS := 0
     
-    global CURRENT_FARM_START_TIME := 0
-    global CURRENT_RUNS := 0
-    global CURRENT_CHESTS := 0
-    global CURRENT_EXOTICS := 0
 
-    ; other global vars
+    global CURRENT_FARM_START_TIME := 0
+
     global CHEST_OPENED := false
     global EXOTIC_DROP := false
+    
+    global API_URL := "https://api.zenairo.com/d2/heartbeat"
+    global HEARTBEAT_INTERVAL := 60000
+    global LAST_RECEIVED_HEARTBEAT := 0
+    global HEARTBEAT_ON := false
 
+    global RECORDED_CHESTS := 0
+    global RECORDED_MISSED := 0
+    global RECORDED_EXOTICS := 0
+    
     read_ini()
 ; =================================== ;
 
 ; Popup Dialog
 ; =================================== ;
     classDropdown := build_dropdown_string(CLASSES, CURRENT_GUARDIAN)
-    slotDropdown := build_dropdown_string(CHARACTER_SLOTS, CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"])
-    aachenDropdown := build_dropdown_string(AACHEN_CHOICES, CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"])
+    slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[class_type]["Settings"]["Slot"])
+    aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[class_type]["Settings"]["Aachen"])
     ; gui to get users character and character slot on character select screen
     Gui, user_input: New, , Select class and their slot on the character select screen
     Gui, user_input: -Caption -Border +hWnduser_input_hwnd +AlwaysOnTop
@@ -119,7 +126,12 @@ global DEBUG := false
     Gui, user_input: Add, DropDownList, vSlotChoice, % slotDropdown
     Gui, user_input: Add, Text,, Which Aachen do you have:
     Gui, user_input: Add, DropDownList, vAachenChoice, % aachenDropdown
-    Gui, user_input: Add, Button, guser_input_OK Default, OK
+    Gui, user_input: Add, Text,, Totals:
+    Gui, user_input: Add, Radio, x+10 vTotalModeAll gTotalModeChanged, All
+    Gui, user_input: Add, Radio, x+10 vTotalModeClass gTotalModeChanged, Class
+    GuiControl,, TotalModeAll, % (TOTALS_DISPLAY = "All") ? 1 : 0
+    GuiControl,, TotalModeClass, % (TOTALS_DISPLAY = "Class") ? 1 : 0
+    Gui, user_input: Add, Button, x10 y+10 guser_input_OK Default, OK
     Gui, user_input: Add, Checkbox, x+30 yp+5 vDebugChoice, Debug
     Gui, user_input: Show
 ; =================================== ;
@@ -138,7 +150,8 @@ global DEBUG := false
     WinSet, Transparent, 255, ahk_id %ExtraInfoBGGUI%
 
     ; label text (wont change ever)
-    label_current := new Overlay("label_current", "Current Session Stats:", -340, 120, 1, 14, False, 0xFFFFFF)
+    label_version := new Overlay("label_version", VERSION, -340, 38, 4, 10, False, 0xFFFFFF)
+    label_current := new Overlay("label_current", "Current Session Stats:", -340, 60, 1, 14, False, 0xFFFFFF)
     label_total := new Overlay("label_total", "Total AFK Stats:", -340, 425, 1, 14, False, 0xFFFFFF)
     label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_stop_hotkey := new Overlay("label_stop_hotkey", "Stop: F4", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
@@ -146,8 +159,9 @@ global DEBUG := false
     label_center_d2_hotkey := new Overlay("label_center_d2_hotkey", "Center D2: F6", 380, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     ; extra info gui stuff 
     global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 10, 1, 18, False, 0xFFFFFF)
-    global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 60, 1, 16, False, 0xFFFFFF)
+    global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 120, 1, 16, False, 0xFFFFFF)
 
+    global current_class := new Overlay("current_class", "Selected Class - ", -340, 90, 1, 14, False, 0xFFFFFF)
     global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", -340, 150, 1, 16, False, 0xFFFFFF) 
     global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", -340, 180, 1, 16, False, 0xFFFFFF) 
     global current_chests_ui := new Overlay("current_chests_ui", "Chests - 0", -340, 210, 1, 16, False, 0xFFFFFF) 
@@ -168,12 +182,13 @@ global DEBUG := false
     global total_chest_counters1 := new Overlay("total_chest_counters1", "21:[---/---]  20:[---/---]  17:[---/---]", -340, 665, 4, 10, False, 0xFFFFFF) 
     global total_chest_counters2 := new Overlay("total_chest_counters2", "19:[---/---]  18:[---/---]  16:[---/---]", -340, 685, 4, 10, False, 0xFFFFFF) 
 
-    global overlay_elements := [label_total, label_current, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, info_ui, runs_till_orbit_ui, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
+    global overlay_elements := [label_version, label_total, label_current, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, info_ui, runs_till_orbit_ui, current_class, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
 
     show_gui()
     global GUI_VISIBLE := true
 
     ; update the total ui stuff with loaded stats 
+    current_class.update_content("Selected Class - " CURRENT_GUARDIAN)   
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(TOTAL_FARM_TIME, true, true, true, false))
     total_runs_ui.update_content("Runs - " TOTAL_RUNS)
     total_chests_ui.update_content("Chests - " TOTAL_CHESTS)
@@ -181,20 +196,6 @@ global DEBUG := false
     total_exotic_drop_rate_ui.update_content("Exotic Drop Rate - " Round((TOTAL_EXOTICS/TOTAL_CHESTS*100),2) "%")
     total_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((TOTAL_FARM_TIME)/TOTAL_RUNS, false, true, true, true, 2))
     total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS)/((TOTAL_RUNS)*2))*100, 2) "%")
-
-    global CURRENT_FARM_START_TIME := 0
-    global CURRENT_RUNS := 0
-    global CURRENT_CHESTS := 0
-    global CURRENT_EXOTICS := 0
-
-    ; hidden stats (im too lazy to actually track these rn, but ideally it could be used to identify if one of the chests is more inconsistent than others)
-    global TOTAL_GROUP_4_CHESTS := [0, 0, 0, 0, 0, 0] ; 16, 17, 18, 19, 20, no chest
-    global TOTAL_SUCCESSFUL_GROUP_4_CHESTS := [0, 0, 0, 0, 0]
-    global MESSED_UP_RUNS := 0 
-
-    ; other global vars
-    global CHEST_OPENED := false
-    global EXOTIC_DROP := false
 
     update_chest_ui()
 ; =================================== ;
@@ -241,6 +242,12 @@ Return
 
 F3:: ; main hotkey that runs the script
 {
+    CURRENT_FARM_START_TIME := A_TickCount
+    LAST_RECEIVED_HEARTBEAT := CURRENT_FARM_START_TIME
+    HEARTBEAT_ON := true
+    send_heartbeat()
+    SetTimer, send_heartbeat, %heartbeat_interval%
+
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
     set_fireteam_privacy("closed")
@@ -255,7 +262,7 @@ F3:: ; main hotkey that runs the script
         change_character(CURRENT_GUARDIAN)
         Sleep, 500
     }
-    CURRENT_FARM_START_TIME := A_TickCount
+    ; CURRENT_FARM_START_TIME := A_TickCount
     current_time_afk_ui.toggle_timer("start")
     total_time_afk_ui.update_content("Time AFK - !timer11101") ; yippee there is a LOT of just ui stuff in here for updating the stats
     total_time_afk_ui.toggle_timer("start")
@@ -360,8 +367,15 @@ F3:: ; main hotkey that runs the script
     return
 }
 
-*F4:: ; reload the script, release any possible held keys, save stats
+F4:: ; reload the script, release any possible held keys, save stats
 {
+    if (HEARTBEAT_ON)
+    {
+        SetTimer, send_heartbeat, Off
+        send_heartbeat()
+        HEARTBEAT_ON := false
+    }
+
     for key, value in key_binds 
         send, % "{" value " Up}"
     ; save all the stats to the afk_chest_stats.ini file
@@ -372,6 +386,13 @@ F3:: ; main hotkey that runs the script
 
 F5:: ; same thing but close the script
 {
+    if (HEARTBEAT_ON)
+    {
+        SetTimer, send_heartbeat, Off
+        send_heartbeat()
+        HEARTBEAT_ON := false
+    }
+
     for key, value in key_binds 
         send, % "{" value " Up}"
     ; save all the stats to the afk_chest_stats.ini file
@@ -880,7 +901,7 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
 
 log_chest(data, chest_id)
 {
-    for _, stat_type in STAT_TYPES {
+    for _, stat_type in CHEST_STAT_TYPES {
         if (InStr(stat_type, data))
         {
             CHEST_STATS[CURRENT_GUARDIAN stat_type][chest_id]++
@@ -937,7 +958,7 @@ reload_landing() ; in the name innit
             percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
             if (percent_white >= 0.3)
             {
-                d2_click(270 + landingOffset, 338, 0) ; try clicking a bit to the side
+                d2_click(295 + landingOffset, 338, 0) ; try clicking a bit to the side
                 Sleep, 100
                 Send, {LButton Down}
                 Sleep, 1100
@@ -976,7 +997,7 @@ orbit_landing() ; loads into the landing from orbit
         percent_white := simpleColorCheck("33|573|24|24", 24, 24)
         if (!percent_white >= 0.4) ; we missed the landing zone
         {
-            d2_click(293, 338, 0) ; try clicking a bit to the side
+            d2_click(295, 338, 0) ; try clicking a bit to the side
             Sleep, 100
             d2_click(295, 338)
             Sleep, 1500
@@ -1052,9 +1073,9 @@ change_character(character)
     search_start := A_TickCount
     while (true) ; wait for screen to be not black (just checking 3 random pixels)
     {
-        if ((!check_pixel([0x000000], 50, 50) &&
-            !check_pixel([0x000000], 100, 100) &&
-            !check_pixel([0x000000], 400, 400))
+        if ((!check_pixel([0x000000], 50, 50)
+            || !check_pixel([0x000000], 100, 100)
+            || !check_pixel([0x000000], 400, 400))
             || A_TickCount - search_start > 90000)
         {
             break
@@ -1415,63 +1436,73 @@ IsAdminProcess(pid)
     return NumGet(TOKEN_ELEVATION, 0) != 0
 }
 
-read_ini()
+read_ini() ; yuck, json would be so much nicer
 {
     ; check if there is a file called `afk_chest_stats.ini` and if so, load the stats from it
     if (FileExist("afk_chest_stats.ini")) {
+
         IniRead, CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian, Hunter
-        IniRead, TOTAL_FARM_TIME, afk_chest_stats.ini, Stats, Time, 0
-        IniRead, TOTAL_RUNS, afk_chest_stats.ini, Stats, Runs, 0
-        IniRead, TOTAL_CHESTS, afk_chest_stats.ini, Stats, Chests, 0
-        IniRead, TOTAL_EXOTICS, afk_chest_stats.ini, Stats, Exotics, 0
+        IniRead, TOTALS_DISPLAY, afk_chest_stats.ini, Stats, Totals_Display, All
 
         for _, class_type in CLASSES {
-            for _, stat_type in STAT_TYPES {
-                if (InStr(stat_type, "total"))
-                {
-                    for _, chest_id in CHEST_IDS {
-                        IniRead, temp, afk_chest_stats.ini, % class_type, % stat_type "_" chest_id, 0
-                        CHEST_STATS[class_type stat_type][chest_id] := temp
+
+            IniRead, temp, afk_chest_stats.ini, % class_type, Slot, Top
+            PLAYER_DATA[class_type]["Settings"]["Slot"] := temp
+            IniRead, temp, afk_chest_stats.ini, % class_type, Aachen, Kinetic
+            PLAYER_DATA[class_type]["Settings"]["Aachen"] := temp
+
+
+
+            for _, class_stat_type in CLASS_STAT_TYPES {
+                if (InStr(class_stat_type, "total")) {
+                    IniRead, temp, afk_chest_stats.ini, % class_type, % class_stat_type, 0
+                    PLAYER_DATA[class_type]["ClassStats"][class_stat_type] := temp
+                }
+            }
+
+            for _, chest_id in CHEST_IDS {
+                for _, chest_stat_type in CHEST_STAT_TYPES {
+                    if (InStr(chest_stat_type, "total"))
+                    {
+                        for _, chest_id in CHEST_IDS {
+                            IniRead, temp, afk_chest_stats.ini, % class_type, % chest_id "_" chest_stat_type, 0
+                            PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type] := temp
+                        }
                     }
                 }
             }
-            IniRead, temp, afk_chest_stats.ini, % class_type, Slot, Top
-            CLASS_SETTINGS[class_type]["Slot"] := temp
-            IniRead, temp, afk_chest_stats.ini, % class_type, Aachen, Kinetic
-            CLASS_SETTINGS[class_type]["Aachen"] := temp
         }
     }
 }
 
 write_ini()
 {
-    if (CURRENT_FARM_START_TIME)
+    if (true) ; CURRENT_FARM_START_TIME)
     {
         IniWrite, % CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian
-
-        ; Calculate the updated totals
-        TOTAL_FARM_TIME += A_TickCount - CURRENT_FARM_START_TIME
-        TOTAL_RUNS := TOTAL_RUNS + CURRENT_RUNS
-        TOTAL_CHESTS := TOTAL_CHESTS + CURRENT_CHESTS
-        TOTAL_EXOTICS := TOTAL_EXOTICS + CURRENT_EXOTICS
-
-        ; Write the updated totals to the ini file
-        IniWrite, % TOTAL_FARM_TIME, afk_chest_stats.ini, Stats, Time
-        IniWrite, % TOTAL_RUNS, afk_chest_stats.ini, Stats, Runs
-        IniWrite, % TOTAL_CHESTS, afk_chest_stats.ini, Stats, Chests
-        IniWrite, % TOTAL_EXOTICS, afk_chest_stats.ini, Stats, Exotics
+        IniWrite, % TOTALS_DISPLAY, afk_chest_stats.ini, Stats, Totals_Display
 
         for _, class_type in CLASSES {
-            for _, stat_type in STAT_TYPES {
-                if (InStr(stat_type, "total"))
-                {
-                    for _, chest_id in CHEST_IDS {
-                        IniWrite, % CHEST_STATS[class_type stat_type][chest_id], afk_chest_stats.ini, % class_type, % stat_type "_" chest_id
+
+            IniWrite, % PLAYER_DATA[class_type]["Settings"]["Slot"], afk_chest_stats.ini, % class_type, Slot
+            IniWrite, % PLAYER_DATA[class_type]["Settings"]["Aachen"], afk_chest_stats.ini, % class_type, Aachen
+
+            for _, class_stat_type in CLASS_STAT_TYPES {
+                if (InStr(class_stat_type, "total")) {
+                    IniWrite, % PLAYER_DATA[class_type]["ClassStats"][class_stat_type], afk_chest_stats.ini, % class_type, % class_stat_type
+                }
+            }
+
+            for _, chest_id in CHEST_IDS {
+                for _, chest_stat_type in CHEST_STAT_TYPES {
+                    if (InStr(chest_stat_type, "total"))
+                    {
+                        for _, chest_id in CHEST_IDS {
+                            IniWrite, % PLAYER_DATA[class_type]["ChestStats"][chest_id][chest_stat_type], afk_chest_stats.ini, % class_type, % chest_id "_" chest_stat_type
+                        }
                     }
                 }
             }
-            IniWrite, % CLASS_SETTINGS[class_type]["Slot"], afk_chest_stats.ini, % class_type, Slot
-            IniWrite, % CLASS_SETTINGS[class_type]["Aachen"], afk_chest_stats.ini, % class_type, Aachen
         }
     }
 }
@@ -1563,6 +1594,50 @@ script_close:
     return
 }
 
+; Function to send heartbeat to the server
+send_heartbeat() {
+    unrecorded_chests_opened := CURRENT_CHESTS - RECORDED_CHESTS
+    unrecorded_chests_missed := CURRENT_MISSED - RECORDED_MISSED
+    unrecorded_exotics_earned := CURRENT_EXOTICS - RECORDED_EXOTICS
+
+    ; Calculate the time spent macroing since the last heartbeat
+    ; current_time := A_TickCount
+    time_since_last_heartbeat := CURRENT_FARM_START_TIME - LAST_RECEIVED_HEARTBEAT
+
+    ; Construct the JSON payload with the delta values
+    json := "{"
+    json .= """chests_opened""" . ":" . unrecorded_chests_opened . ","
+    json .= """chests_missed""" . ":" . 0 . ","
+    json .= """exotics_earned""" . ":" . unrecorded_exotics_earned . ","
+    json .= """time_spent_macroing""" . ":" . (Round(time_since_last_heartbeat / 1000))
+    json .= "}"
+
+    try {
+        HttpObj := ComObjCreate("MSXML2.XMLHTTP")
+        HttpObj.open("POST", API_URL, false)
+        HttpObj.setRequestHeader("Content-Type", "application/json")
+        HttpObj.send(json)
+
+        response := HttpObj.responseText
+
+        if InStr(response, "received")
+        {
+            LAST_RECEIVED_HEARTBEAT := A_TickCount
+            
+            ; Update the last known values
+            RECORDED_CHESTS := CURRENT_CHESTS
+            RECORDED_MISSED := CURRENT_MISSED
+            RECORDED_EXOTICS := CURRENT_EXOTICS
+        }
+        Else
+        {
+
+        }
+    } catch e {
+        ; Silence any errors and continue execution
+    }
+}
+
 ; Popup Dialog Functions
 ; =================================== ;
     build_dropdown_string(options, selected) {
@@ -1579,7 +1654,8 @@ script_close:
     ; Handle ClassChoice change
     ClassChoiceChanged:
         Gui, user_input: Submit, NoHide
-        CURRENT_GUARDIAN := ClassChoice        
+        CURRENT_GUARDIAN := ClassChoice
+        current_class.update_content("Selected Class - " CURRENT_GUARDIAN)   
         slotDropdown := build_dropdown_string(CHARACTER_SLOTS, CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"])
         aachenDropdown := build_dropdown_string(AACHEN_CHOICES, CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"])
         GuiControl,, SlotChoice, % "|" slotDropdown
@@ -1600,6 +1676,15 @@ script_close:
         SetTimer, check_tabbed_out, 200
     return
 
+    TotalModeChanged:
+        Gui, user_input: Submit, NoHide
+        if (TotalModeAll = 1) {
+            TOTALS_DISPLAY = "All"
+        } else if (TotalModeClass = 1) {
+            TOTALS_DISPLAY := "Class"
+        }
+    return
+    
     ; Exit script when GUI is closed
     GuiClose:
     Gui, user_input: Destroy
