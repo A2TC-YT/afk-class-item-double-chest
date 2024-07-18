@@ -9,7 +9,7 @@ SetWorkingDir, %A_ScriptDir%
 SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
-OnExit("write_ini")
+OnExit("on_script_exit")
 global VERSION := "v2.0_beta"
 
 ; Startup Checks
@@ -100,12 +100,11 @@ global DEBUG := false
     global EXOTIC_DROP := false
     
     global API_URL := "https://api.zenairo.com/d2/heartbeat"
-    global HEARTBEAT_INTERVAL := 60000
-    global LAST_RECEIVED_HEARTBEAT := 0
     global HEARTBEAT_ON := false
 
+    global RECORDED_RUNTIME := 0
+    global RECORDED_LOOPS := 0
     global RECORDED_CHESTS := 0
-    global RECORDED_MISSED := 0
     global RECORDED_EXOTICS := 0
     
     read_ini()
@@ -113,6 +112,7 @@ global DEBUG := false
 
 ; Popup Dialog
 ; =================================== ;
+    global INPUT_POPUP_HANDLED := false
     classDropdown := build_dropdown_string(CLASSES, CURRENT_GUARDIAN)
     slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"])
     aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"])
@@ -140,6 +140,7 @@ global DEBUG := false
     ; Offsets for Overlay class
     OVERLAY_OFFSET_X := DESTINY_X
     OVERLAY_OFFSET_Y := DESTINY_Y
+    global GUI_VISIBLE := false
 
     ; background for all the stats
     Gui, info_BG: +E0x20 -Caption -Border +hWndExtraInfoBGGUI +ToolWindow
@@ -153,9 +154,9 @@ global DEBUG := false
     label_current := new Overlay("label_current", "Current Session Stats:", -340, 60, 1, 14, False, 0xFFFFFF)
     label_total := new Overlay("label_total", "Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):", -340, 425, 1, 14, False, 0xFFFFFF)
     label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
-    label_stop_hotkey := new Overlay("label_stop_hotkey", "Stop: F4", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
-    label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", 250, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
-    label_center_d2_hotkey := new Overlay("label_center_d2_hotkey", "Center D2: F6", 380, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
+    label_stop_hotkey := new Overlay("label_stop_hotkey", "Reload: F4", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
+    label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", 275, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
+    label_center_d2_hotkey := new Overlay("label_center_d2_hotkey", "Center D2: F6", 405, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     ; extra info gui stuff 
     global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 10, 1, 18, False, 0xFFFFFF)
     global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 120, 1, 16, False, 0xFFFFFF)
@@ -183,8 +184,7 @@ global DEBUG := false
 
     global overlay_elements := [label_version, label_total, label_current, label_start_hotkey, label_stop_hotkey, label_close_hotkey, label_center_d2_hotkey, info_ui, runs_till_orbit_ui, current_class, current_time_afk_ui, current_runs_ui, current_chests_ui, current_exotics_ui, current_exotic_drop_rate_ui, current_average_loop_time_ui, current_missed_chests_percent_ui, current_chest_counters1, current_chest_counters2, total_time_afk_ui, total_runs_ui, total_chests_ui, total_exotics_ui, total_exotic_drop_rate_ui, total_average_loop_time_ui, total_missed_chests_percent_ui, total_chest_counters1, total_chest_counters2]
 
-    show_gui()
-    global GUI_VISIBLE := true
+    toggle_gui("show")
 
     total_time_afk_ui.update_content("Time AFK - " format_timestamp(compute_total_stat("time"), true, true, true, false))
     update_ui()
@@ -234,11 +234,14 @@ Return
 
 F3:: ; main hotkey that runs the script
 {
-    ; CURRENT_LOOP_START_TIME := A_TickCount
-    ; LAST_RECEIVED_HEARTBEAT := CURRENT_LOOP_START_TIME
-    ; HEARTBEAT_ON := true
-    ; send_heartbeat()
-    ; SetTimer, send_heartbeat, %HEARTBEAT_INTERVAL%
+    if (!INPUT_POPUP_HANDLED)
+        return
+
+    ; Timers during the farm loop cause random interrupts during timing sensitive areas
+    SetTimer, check_tabbed_out, Off 
+
+    HEARTBEAT_ON := true
+    send_heartbeat()
 
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
@@ -338,6 +341,8 @@ F3:: ; main hotkey that runs the script
             ; UI updates
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             update_ui()
+
+            send_heartbeat()
             
             ; Break out to orbit if Overthrow L2
             if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
@@ -356,40 +361,21 @@ F3:: ; main hotkey that runs the script
             Sleep, 500
         }
         Sleep, 30000
+        
+        ; Keep the user's heartbeat alive as orbit_landing takes more time than a normal loop.
+        send_heartbeat()
     }
     Return
 }
 
 F4:: ; reload the script, release any possible held keys, save stats
 {
-    if (HEARTBEAT_ON)
-    {
-        SetTimer, send_heartbeat, Off
-        send_heartbeat()
-        HEARTBEAT_ON := false
-    }
-
-    for key, value in key_binds 
-        send, % "{" value " Up}"
-    ; save all the stats to the afk_chest_stats.ini file
-    write_ini()
     Reload
     Return
 }
 
 F5:: ; same thing but close the script
 {
-    if (HEARTBEAT_ON)
-    {
-        SetTimer, send_heartbeat, Off
-        send_heartbeat()
-        HEARTBEAT_ON := false
-    }
-
-    for key, value in key_binds 
-        send, % "{" value " Up}"
-    ; save all the stats to the afk_chest_stats.ini file
-    write_ini()
     ExitApp
 }
 
@@ -972,9 +958,9 @@ chest_counter(id, appearances, pickups)
 
 compute_total_stat(stat)
 {
+    total_runs := 0
     if (TOTALS_DISPLAY = "All")
     {
-        total_runs := 0
         for _, class_type in CLASSES {
             total_runs += PLAYER_DATA[class_type]["ClassStats"]["total_" . stat]
             total_runs += PLAYER_DATA[class_type]["ClassStats"]["current_" . stat]
@@ -1678,29 +1664,26 @@ draw_crosshair( x:=0, y:=0 )
     return
 }
 
-hide_gui()
+toggle_gui(visibility := "")
 {
-    for index, ui_element in overlay_elements
-    {
-        ui_element.toggle_visibility("hide")
-        if (ui_element.has_background)
-            ui_element.toggle_background_visibility("hide")
-    }
-    Gui, info_BG: Hide
-    GUI_VISIBLE := false
-    return
-}
+    if (visibility = "")
+        visibility := (GUI_VISIBLE) ? "hide" : "show"
 
-show_gui()
-{
     for index, ui_element in overlay_elements
     {
-        ui_element.toggle_visibility("show")
+        ui_element.toggle_visibility(visibility)
         if (ui_element.has_background)
-            ui_element.toggle_background_visibility("show")
+            ui_element.toggle_background_visibility(visibility)
     }
-    Gui, info_BG: Show, NA
-    GUI_VISIBLE := true
+
+    if (visibility = "show") {
+        Gui, info_BG: Show, NA
+        GUI_VISIBLE := true
+    } else {
+        Gui, info_BG: Hide
+        GUI_VISIBLE := false
+    }
+
     return
 }
 
@@ -1715,42 +1698,46 @@ check_tabbed_out:
     if (destiny_active || selection_ui_active)
     {
         if (!GUI_VISIBLE)
-            show_gui()
+            toggle_gui("show")
     }
     else
     {
         if (GUI_VISIBLE)
-            hide_gui()
+            toggle_gui("hide")
     }
 }
 
-script_close:
+release_d2_bindings()
 {
-    IfWinNotExist, Destiny 2
-    {
-        for key, value in key_binds 
-            send, % "{" value " Up}"
-        ExitApp
-    }
+    for key, value in key_binds 
+        send, % "{" value " Up}"
     return
+}
+
+on_script_exit()
+{
+    release_d2_bindings()
+    if (HEARTBEAT_ON)
+    {
+        send_heartbeat()
+        HEARTBEAT_ON := false
+    }
+    write_ini()
 }
 
 ; Function to send heartbeat to the server
 send_heartbeat() {
-    unrecorded_chests_opened := CURRENT_CHESTS - RECORDED_CHESTS
-    unrecorded_chests_missed := CURRENT_MISSED - RECORDED_MISSED
-    unrecorded_exotics_earned := CURRENT_EXOTICS - RECORDED_EXOTICS
-
-    ; Calculate the time spent macroing since the last heartbeat
-    ; current_time := A_TickCount
-    time_since_last_heartbeat := CURRENT_LOOP_START_TIME - LAST_RECEIVED_HEARTBEAT
+    unrecorded_runtime := PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_time"] - RECORDED_RUNTIME
+    unrecorded_loops := PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"] - RECORDED_LOOPS
+    unrecorded_chests := current_chest("pickups") - RECORDED_CHESTS
+    unrecorded_exotics := PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"] - RECORDED_EXOTICS
 
     ; Construct the JSON payload with the delta values
     json := "{"
-    json .= """chests_opened""" . ":" . unrecorded_chests_opened . ","
-    json .= """chests_missed""" . ":" . 0 . ","
-    json .= """exotics_earned""" . ":" . unrecorded_exotics_earned . ","
-    json .= """time_spent_macroing""" . ":" . (Round(time_since_last_heartbeat / 1000))
+    json .= """runtime""" . ":" . unrecorded_runtime . ","
+    json .= """loops""" . ":" . unrecorded_loops . ","
+    json .= """chests_opened""" . ":" . unrecorded_chests . ","
+    json .= """exotic_drops""" . ":" . unrecorded_exotics
     json .= "}"
 
     try {
@@ -1763,19 +1750,20 @@ send_heartbeat() {
 
         if InStr(response, "received")
         {
-            LAST_RECEIVED_HEARTBEAT := A_TickCount
-            
-            ; Update the last known values
-            RECORDED_CHESTS := CURRENT_CHESTS
-            RECORDED_MISSED := CURRENT_MISSED
-            RECORDED_EXOTICS := CURRENT_EXOTICS
+            ; Add what was received to the recorded totals, which are subtracted from current session values
+            ; so we can send the difference (unrecorded) in the next heartbeat.
+            RECORDED_RUNTIME += unrecorded_runtime
+            RECORDED_LOOPS += unrecorded_loops
+            RECORDED_CHESTS += unrecorded_chests
+            RECORDED_EXOTICS += unrecorded_exotics
         }
         Else
         {
-
+            ; MsgBox, "Recording error: " . json
         }
     } catch e {
         ; Silence any errors and continue execution
+        ; MsgBox, "HTTP error."
     }
 }
 
@@ -1815,6 +1803,7 @@ send_heartbeat() {
         DEBUG := DebugChoice
         WinActivate, ahk_id %D2_WINDOW_HANDLE%
         Gui, user_input: Destroy
+        INPUT_POPUP_HANDLED := true
         SetTimer, check_tabbed_out, 200
     return
 
