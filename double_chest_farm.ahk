@@ -229,6 +229,8 @@ global CHEST_PID, EXOTIC_PID
 
 WinActivate, Destiny 2
 
+global STARTUP_SUCCESSFUL := true
+
 Return
 
 ; Hotkeys
@@ -1634,10 +1636,10 @@ read_ini() ; yuck, json would be so much nicer
 
 write_ini()
 {
-    commit_current_stats()
-
-    if (true) ; CURRENT_LOOP_START_TIME)
+    if (STARTUP_SUCCESSFUL)
     {
+        commit_current_stats()
+
         IniWrite, % CURRENT_GUARDIAN, afk_chest_stats.ini, Stats, Last_Guardian
         IniWrite, % TOTALS_DISPLAY, afk_chest_stats.ini, Stats, Totals_Display
 
