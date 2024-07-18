@@ -1,7 +1,7 @@
 #Requires AutoHotkey v1.1.27+
 #SingleInstance, Force
 #Include *i %A_ScriptDir%/overlay_class.ahk
-#Include *i %A_ScriptDir%/Gdip_all.ahk
+#Include *i %A_ScriptDir%/Gdip_ALL.ahk
 SendMode Input
 CoordMode, Mouse, Screen
 CoordMode, Pixel, Screen
@@ -9,6 +9,9 @@ SetWorkingDir, %A_ScriptDir%
 SetBatchLines, -1
 SetKeyDelay, -1
 SetMouseDelay, -1
+; Register message handlers
+OnMessage(0x1003, "on_chest_open")
+OnMessage(0x1004, "on_exotic_drop")
 OnExit("on_script_exit")
 global VERSION := "v2.0_beta"
 
@@ -62,6 +65,8 @@ global dGdip_SaveBitmapToFile := "Gdip_SaveBitmapToFile"
 pToken := %dGdip_Startup%()
 
 global DEBUG := false
+
+global CHEST_PID, EXOTIC_PID
 
 ; Data Initialization
 ; =================================== ;
@@ -239,7 +244,13 @@ F3:: ; main hotkey that runs the script
 
     ; Timers during the farm loop cause random interrupts during timing sensitive areas
     SetTimer, check_tabbed_out, Off 
-
+    
+    DetectHiddenWindows, On
+    WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey v
+    ; Start the child scripts
+    Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "chest", , , CHEST_PID
+    Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
+    
     HEARTBEAT_ON := true
     send_heartbeat()
 
@@ -257,7 +268,8 @@ F3:: ; main hotkey that runs the script
         change_character()
         Sleep, 500
     }
-    loop_successful := true
+    loop_successful := false
+    CURRENT_LOOP_START_TIME := A_TickCount
     current_time_afk_ui.toggle_timer("start")
     total_time_afk_ui.update_content("Time AFK - !timer11101") ; yippee there is a LOT of just ui stuff in here for updating the stats
     total_time_afk_ui.toggle_timer("start")
@@ -275,7 +287,7 @@ F3:: ; main hotkey that runs the script
                 CURRENT_LOOP_START_TIME := A_TickCount
                 loop_successful := false
             }
-            if (!wait_for_spawn(35000)) ; if we dont spawn in, change character and try again
+            if (!wait_for_spawn(45000)) ; if we dont spawn in, change character and try again
             {
                 info_ui.update_content("Didn't detect spawn in :(")
                 Sleep, 5000
@@ -306,6 +318,12 @@ F3:: ; main hotkey that runs the script
                 remaining_chests--
             }
             update_chest_ui()
+
+            StopMonitoring(EXOTIC_PID)
+            if (EXOTIC_DROP)
+                PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
+            EXOTIC_DROP := false
+
             if (chest_spawns[2]) ; open the second chest (one from group 4)
             {
                 log_chest("appearance", chest_spawns[2])
@@ -316,6 +334,11 @@ F3:: ; main hotkey that runs the script
                     remaining_chests--
                 }
                 update_chest_ui()
+            
+                StopMonitoring(EXOTIC_PID)
+                if (EXOTIC_DROP)
+                    PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
+                EXOTIC_DROP := false
             }
             WinActivate, ahk_exe destiny2.exe ; make absolutely, positively, certain we are tabbed in
             ; (not remaining=0 means OT L2 not reached. .. or .. not (remaining=40 and index>=20) means chest tracking broken but OT L2 not reached)
@@ -325,13 +348,6 @@ F3:: ; main hotkey that runs the script
                 info_ui.update_content("Relaunching Landing")
                 reload_landing()
             }
-            
-            ; Loot checks
-            if (EXOTIC_DROP)
-                PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
-            else 
-                SetTimer, check_for_chest_open, Off
-            EXOTIC_DROP := false
 
             ; Run completion
             loop_successful := true
@@ -543,15 +559,18 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     Send, % "{" key_binds["move_backward"] " Up}"
     Send, % "{" key_binds["move_left"] " Up}"
     DllCall("mouse_event", uint, 1, int, 4200, int, 400)
-    SetTimer, check_for_chest_open, 50
-    SetTimer, check_for_exotic_drop, 50
+    ; SetTimer, check_for_chest_open, 50
+    ; SetTimer, check_for_exotic_drop, 50
+    StartMonitoring(CHEST_PID)
+    StartMonitoring(EXOTIC_PID)
     Send, % "{" key_binds["interact"] " Down}"
     PreciseSleep(1100)
     Send, % "{" key_binds["interact"] " Up}"
     if (CHEST_OPENED)
         group_5_chest_opened := true
     else 
-        SetTimer, check_for_chest_open, Off
+        StopMonitoring(CHEST_PID)
+        ;SetTimer, check_for_chest_open, Off
     CHEST_OPENED := false
     DllCall("mouse_event", uint, 1, int, -4400, int, -500)
     return group_5_chest_opened
@@ -594,8 +613,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["jump"] " Up}"
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2210)
@@ -617,8 +638,8 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["jump"] "}"
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2400)
@@ -642,8 +663,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["jump"] "}"
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2350)
@@ -677,8 +700,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(1250)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
@@ -699,8 +724,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(900)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
@@ -721,8 +748,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(1055)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
@@ -749,8 +778,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["jump"] " Down}"
             PreciseSleep(600)
             Send, % "{" key_binds["jump"] " Up}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
             Send, % "{" key_binds["heavy_weapon"] "}"
@@ -772,8 +803,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["jump"] "}"
             PreciseSleep(1600)
             Send, % "{" key_binds["jump"] "}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
             Send, % "{" key_binds["heavy_weapon"] "}"
@@ -795,8 +828,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["jump"] "}"
             PreciseSleep(1600)
             Send, % "{" key_binds["jump"] "}"
-            SetTimer, check_for_chest_open, 50
-            SetTimer, check_for_exotic_drop, 50
+            ; SetTimer, check_for_chest_open, 50
+            ; SetTimer, check_for_exotic_drop, 50
+            StartMonitoring(CHEST_PID)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
             Send, % "{" key_binds["heavy_weapon"] "}"
@@ -817,8 +852,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
         DllCall("mouse_event", uint, 1, int, 1200, int, 450)
         PreciseSleep(2800)
         Send, % "{" key_binds["interact"] " Down}"
-        SetTimer, check_for_chest_open, 50
-        SetTimer, check_for_exotic_drop, 50
+        ; SetTimer, check_for_chest_open, 50
+        ; SetTimer, check_for_exotic_drop, 50
+        StartMonitoring(CHEST_PID)
+        StartMonitoring(EXOTIC_PID)
         Send, % "{" key_binds["heavy_weapon"] "}"
         PreciseSleep(2420)
         Send, % "{" key_binds["move_forward"] " Up}"
@@ -837,8 +874,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
         DllCall("mouse_event", uint, 1, int, -1570, int, 0)
         PreciseSleep(4200)
         Send, % "{" key_binds["interact"] " Down}"
-        SetTimer, check_for_chest_open, 50
-        SetTimer, check_for_exotic_drop, 50
+        ; SetTimer, check_for_chest_open, 50
+        ; SetTimer, check_for_exotic_drop, 50
+        StartMonitoring(CHEST_PID)
+        StartMonitoring(EXOTIC_PID)
         DllCall("mouse_event", uint, 1, int, 610, int, 50)
         Send, % "{" key_binds["heavy_weapon"] "}"
         PreciseSleep(1450)
@@ -850,33 +889,26 @@ group_4_chests(chest_number) ; picks up chests 16-20
     if (CHEST_OPENED)
         group_4_chest_opened := true
     else 
-        SetTimer, check_for_chest_open, Off
+        StopMonitoring(CHEST_PID)
+        ;SetTimer, check_for_chest_open, Off
+    CHEST_OPENED := false
     return group_4_chest_opened
 }
 
-check_for_chest_open: ; bad way of checking for chest opening but it works for the most part
-{
-    percent_white := exact_color_check("583|473|34|32", 34, 32, 0xCBE4FF) ; checks for the circle around the interact prompt
-    if (percent_white > 0.07)
-    {
-        CHEST_OPENED := true
-        SetTimer, check_for_chest_open, Off
-    }
-    return
+StartMonitoring(target_pid) {
+    PostMessage, 0x1001, 0, 0, , % "ahk_pid " target_pid
 }
 
-check_for_exotic_drop: ; okay way of checking for exotic drops
-{
-    percent_white_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
-    percent_white_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
-    percent_white_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
-    percent_white_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
-    if (percent_white_1 > 0.02 || percent_white_2 > 0.02 || percent_white_3 > 0.02 || percent_white_4 > 0.02)
-    {
-        EXOTIC_DROP := true
-        SetTimer, check_for_exotic_drop, Off
-    }
-    return
+StopMonitoring(target_pid) {
+    PostMessage, 0x1002, 0, 0, , % "ahk_pid " target_pid
+}
+
+on_chest_open(wParam, lParam, msg, hwnd) {
+    CHEST_OPENED := true
+}
+
+on_exotic_drop(wParam, lParam, msg, hwnd) {
+    EXOTIC_DROP := true
 }
 
 log_chest(data, chest_id)
@@ -1716,6 +1748,11 @@ release_d2_bindings()
 
 on_script_exit()
 {
+    if (CHEST_PID)
+        Process, Close, %CHEST_PID%
+    if (EXOTIC_PID)
+        Process, Close, %EXOTIC_PID%
+
     release_d2_bindings()
     if (HEARTBEAT_ON)
     {
