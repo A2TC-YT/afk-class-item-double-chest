@@ -115,8 +115,8 @@ global DEBUG := false
 ; Popup Dialog
 ; =================================== ;
     classDropdown := build_dropdown_string(CLASSES, CURRENT_GUARDIAN)
-    slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[class_type]["Settings"]["Slot"])
-    aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[class_type]["Settings"]["Aachen"])
+    slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"])
+    aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"])
     ; gui to get users character and character slot on character select screen
     Gui, user_input: New, , Select class and their slot on the character select screen
     Gui, user_input: -Caption -Border +hWnduser_input_hwnd +AlwaysOnTop
@@ -152,7 +152,7 @@ global DEBUG := false
     ; label text (wont change ever)
     label_version := new Overlay("label_version", VERSION, -340, 38, 4, 10, False, 0xFFFFFF)
     label_current := new Overlay("label_current", "Current Session Stats:", -340, 60, 1, 14, False, 0xFFFFFF)
-    label_total := new Overlay("label_total", "Total AFK Stats:", -340, 425, 1, 14, False, 0xFFFFFF)
+    label_total := new Overlay("label_total", "Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):", -340, 425, 1, 14, False, 0xFFFFFF)
     label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_stop_hotkey := new Overlay("label_stop_hotkey", "Stop: F4", 130, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", 250, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
@@ -161,7 +161,7 @@ global DEBUG := false
     global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 10, 1, 18, False, 0xFFFFFF)
     global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 120, 1, 16, False, 0xFFFFFF)
 
-    global current_class := new Overlay("current_class", "Selected Class - ", -340, 90, 1, 14, False, 0xFFFFFF)
+    global current_class := new Overlay("current_class", "Selected Class - " . CURRENT_GUARDIAN, -340, 90, 1, 14, False, 0xFFFFFF)
     global current_time_afk_ui := new Overlay("current_time_afk_ui", "Time AFK - !timer11101", -340, 150, 1, 16, False, 0xFFFFFF) 
     global current_runs_ui := new Overlay("current_runs_ui", "Runs - 0", -340, 180, 1, 16, False, 0xFFFFFF) 
     global current_chests_ui := new Overlay("current_chests_ui", "Chests - 0", -340, 210, 1, 16, False, 0xFFFFFF) 
@@ -187,17 +187,7 @@ global DEBUG := false
     show_gui()
     global GUI_VISIBLE := true
 
-    ; update the total ui stuff with loaded stats 
-    current_class.update_content("Selected Class - " CURRENT_GUARDIAN)   
-    total_time_afk_ui.update_content("Time AFK - " format_timestamp(TOTAL_FARM_TIME, true, true, true, false))
-    total_runs_ui.update_content("Runs - " TOTAL_RUNS)
-    total_chests_ui.update_content("Chests - " TOTAL_CHESTS)
-    total_exotics_ui.update_content("Exotics - " TOTAL_EXOTICS)
-    total_exotic_drop_rate_ui.update_content("Exotic Drop Rate - " Round((TOTAL_EXOTICS/TOTAL_CHESTS*100),2) "%")
-    total_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((TOTAL_FARM_TIME)/TOTAL_RUNS, false, true, true, true, 2))
-    total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS)/((TOTAL_RUNS)*2))*100, 2) "%")
-
-    update_chest_ui()
+    update_ui()
 ; =================================== ;
 
 ; Keybind loading
@@ -242,27 +232,27 @@ Return
 
 F3:: ; main hotkey that runs the script
 {
-    CURRENT_FARM_START_TIME := A_TickCount
-    LAST_RECEIVED_HEARTBEAT := CURRENT_FARM_START_TIME
-    HEARTBEAT_ON := true
-    send_heartbeat()
-    SetTimer, send_heartbeat, %heartbeat_interval%
+    ; CURRENT_FARM_START_TIME := A_TickCount
+    ; LAST_RECEIVED_HEARTBEAT := CURRENT_FARM_START_TIME
+    ; HEARTBEAT_ON := true
+    ; send_heartbeat()
+    ; SetTimer, send_heartbeat, %heartbeat_interval%
 
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
     set_fireteam_privacy("closed")
     Sleep, 1000
-    change_character(CURRENT_GUARDIAN)
+    change_character()
     Sleep, 500
     loop, ; loop until we actually load in lol
     {
         if (orbit_landing())
             break
         Sleep, 500
-        change_character(CURRENT_GUARDIAN)
+        change_character()
         Sleep, 500
     }
-    ; CURRENT_FARM_START_TIME := A_TickCount
+    CURRENT_FARM_START_TIME := A_TickCount
     current_time_afk_ui.toggle_timer("start")
     total_time_afk_ui.update_content("Time AFK - !timer11101") ; yippee there is a LOT of just ui stuff in here for updating the stats
     total_time_afk_ui.toggle_timer("start")
@@ -294,12 +284,8 @@ F3:: ; main hotkey that runs the script
             {
                 WinActivate, ahk_exe destiny2.exe ; triple check, just in case
                 reload_landing()
-                MESSED_UP_RUNS++
-                CURRENT_RUNS++
-                total_runs_ui.update_content("Runs: " TOTAL_RUNS+CURRENT_RUNS)
-                current_runs_ui.update_content("Runs - " CURRENT_RUNS)
-                total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS+CURRENT_CHESTS)/((TOTAL_RUNS+CURRENT_RUNS)*2))*100, 2) "%")
-                current_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - (CURRENT_CHESTS/(CURRENT_RUNS*2))*100, 2) "%")
+                PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]++
+                update_ui()
                 continue
             }
             info_ui.update_content("Going to chests - " chest_spawns[1] " and " chest_spawns[2])
@@ -330,36 +316,27 @@ F3:: ; main hotkey that runs the script
                 info_ui.update_content("Relaunching Landing")
                 reload_landing()
             }
-            CURRENT_RUNS++
-            total_runs_ui.update_content("Runs: " TOTAL_RUNS+CURRENT_RUNS)
-            current_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((A_TickCount-CURRENT_FARM_START_TIME)/CURRENT_RUNS, false, true, true, true, 2))
-            total_average_loop_time_ui.update_content("Average Loop Time - " format_timestamp((TOTAL_FARM_TIME+A_TickCount-CURRENT_FARM_START_TIME)/(TOTAL_RUNS+CURRENT_RUNS), false, true, true, true, 2))
-            current_runs_ui.update_content("Runs - " CURRENT_RUNS)
+            PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]++
             if (EXOTIC_DROP)
-                CURRENT_EXOTICS++
+                PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
             else 
                 SetTimer, check_for_chest_open, Off
-            total_exotics_ui.update_content("Exotics - " TOTAL_EXOTICS+CURRENT_EXOTICS)
-            current_exotics_ui.update_content("Exotics - " CURRENT_EXOTICS)
-            total_exotic_drop_rate_ui.update_content("Exotic Drop Rate - " Round((TOTAL_EXOTICS+CURRENT_EXOTICS)/(TOTAL_CHESTS+CURRENT_CHESTS)*100,2) "%")
-            current_exotic_drop_rate_ui.update_content("Exotic Drop Rate - " Round(CURRENT_EXOTICS/CURRENT_CHESTS*100,2) "%")
-            total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((TOTAL_CHESTS+CURRENT_CHESTS)/((TOTAL_RUNS+CURRENT_RUNS)*2))*100, 2) "%")
-            current_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - (CURRENT_CHESTS/(CURRENT_RUNS*2))*100, 2) "%")
             EXOTIC_DROP := false
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
+            update_ui()
             if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
                 break
         }
         info_ui.update_content("Orbit and relaunch") ; opened 40 chests, time to orbit and relaunch
         WinActivate, ahk_exe destiny2.exe ; one more for good measure
-        change_character(CURRENT_GUARDIAN)
+        change_character()
         Sleep, 500
         loop, ; same thing as start, go until we actually start loading in
         {
             if (orbit_landing())
                 break
             Sleep, 500
-            change_character(CURRENT_GUARDIAN)
+            change_character()
             Sleep, 500
         }
         Sleep, 30000
@@ -901,22 +878,67 @@ check_for_exotic_drop: ; okay way of checking for exotic drops
 
 log_chest(data, chest_id)
 {
-    for _, stat_type in CHEST_STAT_TYPES {
-        if (InStr(stat_type, data))
+    for _, chest_stat_type in CHEST_STAT_TYPES {
+        if (InStr(chest_stat_type, data))
         {
-            CHEST_STATS[CURRENT_GUARDIAN stat_type][chest_id]++
+            PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][chest_id][chest_stat_type]++
         }
     }
 }
 
+current_chest(stat)
+{
+    sum := 0
+    for _, chest_id in CHEST_IDS {
+        sum += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][chest_id]["current_" . stat]
+    }
+    return sum
+}
+
+total_chest(stat)
+{
+    sum := 0
+    if (TOTALS_DISPLAY = "All")
+    {
+        for _, class_type in CLASSES {
+            for _, chest_id in CHEST_IDS {
+                sum += PLAYER_DATA[class_type]["ChestStats"][chest_id]["current_" . stat]
+                sum += PLAYER_DATA[class_type]["ChestStats"][chest_id]["total_" . stat]
+            }
+        }
+    }
+    Else
+    {
+        for _, chest_id in CHEST_IDS {
+            sum += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][chest_id]["current_" . stat]
+            sum += PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][chest_id]["total_" . stat]
+        }
+    }
+    return sum
+}
+
 current_counter(id)
 {
-    return chest_counter(id, CHEST_STATS[CURRENT_GUARDIAN "current_appearances"][id], CHEST_STATS[CURRENT_GUARDIAN "current_pickups"][id])
+    return chest_counter(id, PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_appearances"], PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["current_pickups"])
 }
 
 total_counter(id)
 {
-    return chest_counter(id, CHEST_STATS[CURRENT_GUARDIAN "total_appearances"][id], CHEST_STATS[CURRENT_GUARDIAN "total_pickups"][id])
+    appearances := 0
+    pickups := 0
+    if (TOTALS_DISPLAY = "All")
+    {
+        for _, class_type in CLASSES {
+            appearances += PLAYER_DATA[class_type]["ChestStats"][id]["total_appearances"]
+            pickups += PLAYER_DATA[class_type]["ChestStats"][id]["total_pickups"]
+        }
+    }
+    Else
+    {
+        appearances := PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["total_appearances"]
+        pickups := PLAYER_DATA[CURRENT_GUARDIAN]["ChestStats"][id]["total_pickups"]
+    }
+    return chest_counter(id, appearances, pickups)
 }
 
 chest_counter(id, appearances, pickups)
@@ -924,10 +946,60 @@ chest_counter(id, appearances, pickups)
     return id ":" Format("[{:3}/{:3}]", pickups, appearances)
 }
 
+compute_total_stat(stat)
+{
+    if (TOTALS_DISPLAY = "All")
+    {
+        total_runs := 0
+        for _, class_type in CLASSES {
+            total_runs += PLAYER_DATA[class_type]["ClassStats"]["total_" . stat]
+            total_runs += PLAYER_DATA[class_type]["ClassStats"]["current_" . stat]
+        }
+    }
+    else
+    {
+        total_runs := PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["total_" . stat] + PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_" . stat]
+    }
+    return total_runs        
+}
+
+update_ui()
+{
+    ; Current
+    ; Time AFK
+    ; -Handled by timer.
+    ; Runs
+    current_runs_ui.update_content("Runs - " PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"])
+    ; Chests
+    ; -update_chest_ui()
+    ; Exotics
+    current_exotics_ui.update_content("Exotics - " PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"])
+    ; Exotic Drop Rate
+    ; Average Loop Time
+    ; Percent Chests Missed
+    current_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - (current_chest("pickups")/(PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]*2))*100, 2) "%")
+
+    ; Total
+    ; Time AFK
+    ; -Handled by timer.
+    ; Runs
+    total_runs_ui.update_content("Runs - " compute_total_stat("runs"))
+    ; Chests
+    ; -update_chest_ui()
+    ; Exotics
+    total_exotics_ui.update_content("Exotics - " compute_total_stat("exotics"))
+    ; Exotic Drop Rate
+    ; Average Loop Time
+    ; Percent Chests Missed
+    total_missed_chests_percent_ui.update_content("Percent Chests Missed - " Round(100 - ((total_chest("pickups"))/((compute_total_stat("runs"))*2))*100, 2) "%")
+
+    update_chest_ui()
+}
+
 update_chest_ui()
 {
-    total_chests_ui.update_content("Chests - " TOTAL_CHESTS+CURRENT_CHESTS)
-    current_chests_ui.update_content("Chests - " CURRENT_CHESTS)
+    current_chests_ui.update_content("Chests - " current_chest("pickups"))
+    total_chests_ui.update_content("Chests - " total_chest("pickups"))
 
     current_chest_counters1.update_content(current_counter(21) "  " current_counter(20) "  " current_counter(17))
     current_chest_counters2.update_content(current_counter(19) "  " current_counter(18) "  " current_counter(16))
@@ -1020,8 +1092,11 @@ orbit_landing() ; loads into the landing from orbit
 
 ; Destiny Helper Functions
 ; =================================== ;
-change_character(character)
+change_character(slot := "")
 {
+    if (slot = "")
+        slot := PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"]
+    
     if (!key_binds["ui_open_start_menu_settings_tab"]) ; if no settings keybind use f1 :D (slower)
     {
         Send, {F1}
@@ -1050,19 +1125,19 @@ change_character(character)
             break
     }
     Sleep, 2000
-    if (CLASS_SETTINGS[character]["Slot"] == "Top")
+    if (slot == "Top")
     {
         d2_click(900, 304, 0)
         Sleep, 100
         d2_click(900, 304)
     }
-    else if (CLASS_SETTINGS[character]["Slot"] == "Middle")
+    else if (slot == "Middle")
     {
         d2_click(885, 379, 0)
         Sleep, 100
         d2_click(885, 379)
     }
-    else if (CLASS_SETTINGS[character]["Slot"] == "Bottom")
+    else if (slot == "Bottom")
     {
         d2_click(902, 448, 0)
         Sleep, 100
@@ -1436,6 +1511,11 @@ IsAdminProcess(pid)
     return NumGet(TOKEN_ELEVATION, 0) != 0
 }
 
+committ_current_stats()
+{
+
+}
+
 read_ini() ; yuck, json would be so much nicer
 {
     ; check if there is a file called `afk_chest_stats.ini` and if so, load the stats from it
@@ -1656,19 +1736,19 @@ send_heartbeat() {
         Gui, user_input: Submit, NoHide
         CURRENT_GUARDIAN := ClassChoice
         current_class.update_content("Selected Class - " CURRENT_GUARDIAN)   
-        slotDropdown := build_dropdown_string(CHARACTER_SLOTS, CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"])
-        aachenDropdown := build_dropdown_string(AACHEN_CHOICES, CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"])
+        slotDropdown := build_dropdown_string(CHARACTER_SLOTS, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"])
+        aachenDropdown := build_dropdown_string(AACHEN_CHOICES, PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"])
         GuiControl,, SlotChoice, % "|" slotDropdown
         GuiControl,, AachenChoice, % "|" aachenDropdown
-        update_chest_ui()
+        update_ui()
     return
 
     ; Handle OK button click
     user_input_OK:
         Gui, user_input: Submit
         CURRENT_GUARDIAN := ClassChoice
-        CLASS_SETTINGS[CURRENT_GUARDIAN]["Slot"] := SlotChoice
-        CLASS_SETTINGS[CURRENT_GUARDIAN]["Aachen"] := AachenChoice
+        PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Slot"] := SlotChoice
+        PLAYER_DATA[CURRENT_GUARDIAN]["Settings"]["Aachen"] := AachenChoice
         DEBUG := DebugChoice
         update_chest_ui()
         WinActivate, ahk_id %D2_WINDOW_HANDLE%
@@ -1679,10 +1759,12 @@ send_heartbeat() {
     TotalModeChanged:
         Gui, user_input: Submit, NoHide
         if (TotalModeAll = 1) {
-            TOTALS_DISPLAY = "All"
+            TOTALS_DISPLAY := "All"
         } else if (TotalModeClass = 1) {
             TOTALS_DISPLAY := "Class"
         }
+        label_total.update_content("Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):")
+        update_ui()
     return
     
     ; Exit script when GUI is closed
