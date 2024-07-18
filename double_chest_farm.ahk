@@ -382,8 +382,8 @@ F6::
     WinGetPos,,, Width, Height, ahk_exe destiny2.exe
     WinMove, ahk_exe destiny2.exe,, (A_ScreenWidth/2)-((Width-(350 * dpiInverse))/2), (A_ScreenHeight/2)-(Height/2)
     Sleep 1000
-    find_d2()
     ; we also want it to reload script so gui is in the right spot
+    Reload
 }
 
 ; F7:: ; testing hotkey
