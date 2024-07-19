@@ -322,11 +322,6 @@ F3:: ; main hotkey that runs the script
             }
             update_chest_ui()
 
-            StopMonitoring(EXOTIC_PID)
-            if (EXOTIC_DROP)
-                PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
-            EXOTIC_DROP := false
-
             if (chest_spawns[2]) ; open the second chest (one from group 4)
             {
                 log_chest("appearance", chest_spawns[2])
@@ -593,6 +588,13 @@ group_4_chests(chest_number) ; picks up chests 16-20
     Send, % "{" key_binds["toggle_sprint"] " Up}"
     Send, % "{" key_binds["move_forward"] " Up}"
     PreciseSleep(200)
+
+    ; Stop exotic tracking and record the previous.
+    StopMonitoring(EXOTIC_PID)
+    if (EXOTIC_DROP)
+        PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
+    EXOTIC_DROP := false
+
     if (chest_number == 20)
     {
         if (CURRENT_GUARDIAN == "Hunter")
