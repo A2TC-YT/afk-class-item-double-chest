@@ -13,7 +13,7 @@ SetMouseDelay, -1
 OnMessage(0x1003, "on_chest_open")
 OnMessage(0x1004, "on_exotic_drop")
 OnExit("on_script_exit")
-global VERSION := "2.0.0-beta.5"
+global VERSION := "2.0.0"
 
 ; Startup Checks
 ; =================================== ;
