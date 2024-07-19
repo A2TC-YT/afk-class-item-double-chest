@@ -115,6 +115,7 @@ find_d2() ; find the client area of d2
     DESTINY_HEIGHT := ClientHeight
     return
 }
+
 exact_color_check(coords, w, h, base_color) ; also bad function to check for specific color pixels in a given area
 {
     ; convert the coords to be relative to destiny 

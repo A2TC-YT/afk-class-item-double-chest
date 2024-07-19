@@ -1,4 +1,4 @@
-#Requires AutoHotkey v1.1.27+
+#Requires AutoHotkey >=1.1.36 <1.2
 #SingleInstance, Force
 #Include *i %A_ScriptDir%/overlay_class.ahk
 #Include *i %A_ScriptDir%/Gdip_ALL.ahk
@@ -13,7 +13,7 @@ SetMouseDelay, -1
 OnMessage(0x1003, "on_chest_open")
 OnMessage(0x1004, "on_exotic_drop")
 OnExit("on_script_exit")
-global VERSION := "v2.0_beta_2"
+global VERSION := "2.0.0-beta.3"
 
 ; Startup Checks
 ; =================================== ;
@@ -155,7 +155,7 @@ global CHEST_PID, EXOTIC_PID
     WinSet, Transparent, 255, ahk_id %ExtraInfoBGGUI%
 
     ; label text (wont change ever)
-    label_version := new Overlay("label_version", VERSION, -340, 38, 4, 10, False, 0xFFFFFF)
+    label_version := new Overlay("label_version", "v" . VERSION, -340, 4, 4, 10, False, 0xFFFFFF)
     label_current := new Overlay("label_current", "Current Session Stats:", -340, 60, 1, 14, False, 0xFFFFFF)
     label_total := new Overlay("label_total", "Total AFK Stats (" . (TOTALS_DISPLAY = "All" ? "All" : CURRENT_GUARDIAN) . "):", -340, 425, 1, 14, False, 0xFFFFFF)
     label_start_hotkey := new Overlay("label_start_hotkey", "Start: F3", 10, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
@@ -163,7 +163,7 @@ global CHEST_PID, EXOTIC_PID
     label_close_hotkey := new Overlay("label_close_hotkey", "Close: F5", 275, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     label_center_d2_hotkey := new Overlay("label_center_d2_hotkey", "Center D2: F6", 405, DESTINY_HEIGHT+15, 1, 18, False, 0xFFFFFF, true, 0x292929, 15)
     ; extra info gui stuff 
-    global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 10, 1, 18, False, 0xFFFFFF)
+    global info_ui := new Overlay("info_ui", "Doing Nothing :3", -340, 28, 1, 18, False, 0xFFFFFF)
     global runs_till_orbit_ui := new Overlay("runs_till_orbit_ui", "Runs till next orbit - 0", -340, 120, 1, 16, False, 0xFFFFFF)
 
     global current_class := new Overlay("current_class", "Selected Class - " . CURRENT_GUARDIAN, -340, 90, 1, 14, False, 0xFFFFFF)
@@ -1785,6 +1785,7 @@ send_heartbeat() {
 
     ; Construct the JSON payload with the delta values
     json := "{"
+    json .= """version""" . ":" . """" . VERSION . """" . ","
     json .= """runtime""" . ":" . unrecorded_runtime . ","
     json .= """loops""" . ":" . unrecorded_loops . ","
     json .= """chests_opened""" . ":" . unrecorded_chests . ","
@@ -1798,6 +1799,7 @@ send_heartbeat() {
         HttpObj.send(json)
 
         response := HttpObj.responseText
+        ; MsgBox, "Sent: " . %json%
 
         if InStr(response, "received")
         {
@@ -1810,7 +1812,7 @@ send_heartbeat() {
         }
         Else
         {
-            ; MsgBox, "Recording error: " . json
+            ; MsgBox, "Recording error: " . %response%
         }
     } catch e {
         ; Silence any errors and continue execution
