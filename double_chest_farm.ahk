@@ -255,7 +255,7 @@ F3:: ; main hotkey that runs the script
     Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
     
     HEARTBEAT_ON := true
-    send_heartbeat()
+    ; send_heartbeat()
 
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
