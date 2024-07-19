@@ -12,20 +12,30 @@ global main_pid := A_Args[1]
 global task := A_Args[2]
 ;MsgBox, "mainpid: " . %main_pid% . " task: " . %task%
 
+global pToken := -1
 global DESTINY_X := 0
 global DESTINY_Y := 0
+global TitleBarHeight := 0
+global BorderWidth := 0
 global DESTINY_WIDTH := 0
 global DESTINY_HEIGHT := 0
+global D2_WINDOW_HANDLE := -1
 find_d2()
 
 global monitoring := false
 
-Gui, Show, Hide, ChildWindow
+Gui, +AlwaysOnTop +ToolWindow -Caption
+Gui, Show, Hide, MessageReceiver
 Return
 
 StartMonitoring(wParam, lParam, msg, hwnd) {
-    pToken := Gdip_Startup()
+    if (pToken = -1)
+        pToken := Gdip_Startup()
     monitoring := true
+
+    Gui, +AlwaysOnTop +ToolWindow -Caption
+    Gui, Show, Hide, MessageReceiver
+
     if (task = "chest") {
         CheckChestOpen()
         SetTimer, CheckChestOpen, 50
@@ -46,7 +56,7 @@ StopMonitoring(wParam, lParam, msg, hwnd) {
 
 CheckChestOpen()
 {
-    WinActivate, Destiny 2
+    ; WinActivate, Destiny 2
     percent_white := exact_color_check("583|473|34|32", 34, 32, 0xCBE4FF) ; checks for the circle around the interact prompt
     if (percent_white > 0.07)
     {
@@ -58,7 +68,7 @@ CheckChestOpen()
 
 CheckExoticDrop()
 {
-    WinActivate, Destiny 2
+    ; WinActivate, Destiny 2
     percent_white_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
     percent_white_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
     percent_white_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
@@ -105,17 +115,26 @@ find_d2() ; find the client area of d2
     DESTINY_HEIGHT := ClientHeight
     return
 }
-
 exact_color_check(coords, w, h, base_color) ; also bad function to check for specific color pixels in a given area
 {
     ; convert the coords to be relative to destiny 
     coords := StrSplit(coords, "|")
-    x := coords[1] + DESTINY_X
-    y := coords[2] + DESTINY_Y
-    coords := x "|" y "|" w "|" h
-    pBitmap := Gdip_BitmapFromScreen(coords)
-    ; save bitmap 
-    ; %dGdip_SaveBitmapToFile%(pBitmap, A_ScriptDir . "\test.png")
+    x := coords[1] + BorderWidth ; + DESTINY_X
+    y := coords[2] + TitleBarHeight ; + DESTINY_Y
+
+    ; Get the bitmap of the entire window
+    pBitmap := Gdip_BitmapFromHWND(D2_WINDOW_HANDLE)
+
+    ; Create a sub-bitmap from the original bitmap
+    pSubBitmap := Gdip_CreateBitmap(w, h)
+    G := Gdip_GraphicsFromImage(pSubBitmap)
+    Gdip_DrawImage(G, pBitmap, 0, 0, w, h, x, y, w, h)
+    Gdip_DeleteGraphics(G)
+
+    ; Save the sub-bitmap
+    ; Gdip_SaveBitmapToFile(pSubBitmap, A_ScriptDir . "\test" . coords[1] . "_" . coords[2] . "_" . w . "_" . h . ".png")
+
+    ; Process the sub-bitmap
     x := 0
     y := 0
     white := 0
@@ -124,7 +143,7 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
     {
         loop %w%
         {
-            color := (Gdip_GetPixel(pBitmap, x, y) & 0x00FFFFFF)
+            color := (Gdip_GetPixel(pSubBitmap, x, y) & 0x00FFFFFF)
             if (color == base_color)
                 white += 1
             total += 1
@@ -134,7 +153,7 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
         y += 1
     }
     Gdip_DisposeImage(pBitmap)
+    Gdip_DisposeImage(pSubBitmap)
     pWhite := white/total
     return pWhite
-
 }
