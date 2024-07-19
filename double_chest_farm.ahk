@@ -1079,10 +1079,11 @@ reload_landing() ; in the name innit
         d2_click(20, 381, 0) ; mouse to drag map and show landing icon
         PreciseSleep(850)
         d2_click(270, 338, 0) ; mouse stop drag and hover landing
-        Sleep, 100
-        Send, {LButton Down} ; mouse click landing
+        Click, % DESTINY_X + 270 " " DESTINY_Y + 338 " "
+        Click, Down
         Sleep, 1100
-        Send, {LButton Up}
+        Click, % DESTINY_X + 270 " " DESTINY_Y + 338 " "
+        Click, Up
         Sleep, 1000
         landingOffset := 0
         loop, 10
@@ -1093,9 +1094,11 @@ reload_landing() ; in the name innit
             {
                 d2_click(295 + landingOffset, 338, 0) ; try clicking a bit to the side
                 Sleep, 100
-                Send, {LButton Down}
+                Click, % DESTINY_X + 295 + landingOffset " " DESTINY_Y + 338 " "
+                Click, Down
                 Sleep, 1100
-                Send, {LButton Up}
+                Click, % DESTINY_X + 295 + landingOffset " " DESTINY_Y + 338 " "
+                Click, Up
                 Sleep, 1000
             }
             percent_white := exact_color_check("920|58|56|7", 56, 7, 0xECECEC)
@@ -1315,7 +1318,10 @@ wait_for_spawn(time_out:=200000) ; waits for spawn in by checking for heavy ammo
             loop, 5
             {
                 if(check_pixel([0xFFFFFF], 65 + x_off, 60 + y_off)) ; raid logo
-                    return true
+                {
+                    if(check_pixel([0xC19AFF, 0xC299FF], 387 + x_off, 667 + y_off)) ; heavy ammo
+                        return true ; This subsequent check prevents some planets from throwing false positive
+                }
                 Sleep, 10
                 if(check_pixel([0x6F98CB], 85 + x_off, 84 + y_off)) ; minimap
                     return true
