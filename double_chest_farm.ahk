@@ -465,7 +465,7 @@ find_chests() ; figures out which chest in group 4 is spawned and also waits for
     Send, % "{" key_binds["hold_zoom"] " Down}"
     Sleep, 700
 
-    look_delay := 40
+    look_delay := 100
     started_looking := A_TickCount
 
     while (not all_chests_found) ; basically just loop until chests are all found (group 4 chest and also chest 21)
