@@ -356,7 +356,7 @@ F3:: ; main hotkey that runs the script
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             update_ui()
 
-            ; send_heartbeat()
+            send_heartbeat()
             
             ; Break out to orbit if Overthrow L2
             if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
