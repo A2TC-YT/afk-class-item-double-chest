@@ -255,7 +255,7 @@ F3:: ; main hotkey that runs the script
     Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
     
     HEARTBEAT_ON := true
-    send_heartbeat()
+    ; send_heartbeat()
 
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
@@ -356,7 +356,7 @@ F3:: ; main hotkey that runs the script
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             update_ui()
 
-            send_heartbeat()
+            ; send_heartbeat()
             
             ; Break out to orbit if Overthrow L2
             if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
