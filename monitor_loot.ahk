@@ -26,6 +26,8 @@ global monitoring := false
 
 Gui, +AlwaysOnTop +ToolWindow -Caption
 Gui, Show, Hide, MessageReceiver
+
+SetTimer, CheckParentRunning, 10000
 Return
 
 StartMonitoring(wParam, lParam, msg, hwnd) {
@@ -69,11 +71,11 @@ CheckChestOpen()
 CheckExoticDrop()
 {
     ; WinActivate, Destiny 2
-    percent_white_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
-    percent_white_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
-    percent_white_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
-    percent_white_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
-    if (percent_white_1 > 0.02 || percent_white_2 > 0.02 || percent_white_3 > 0.02 || percent_white_4 > 0.02)
+    pct_exotic_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
+    pct_exotic_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
+    pct_exotic_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
+    pct_exotic_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
+    if (pct_exotic_1 > 0.01 || pct_exotic_2 > 0.01 || pct_exotic_3 > 0.01 || pct_exotic_4 > 0.01)
     {
         PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
         SetTimer, CheckExoticDrop, Off
@@ -157,4 +159,14 @@ exact_color_check(coords, w, h, base_color) ; also bad function to check for spe
     Gdip_DisposeImage(pSubBitmap)
     pWhite := white/total
     return pWhite
+}
+
+CheckParentRunning()
+{
+    Process, Exist, %main_pid%
+    if (!ErrorLevel) ; If ErrorLevel is 0, the process does not exist
+    {
+        ExitApp
+    }
+    return
 }

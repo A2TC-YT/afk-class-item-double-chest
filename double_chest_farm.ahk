@@ -337,11 +337,6 @@ F3:: ; main hotkey that runs the script
                     remaining_chests--
                 }
                 update_chest_ui()
-            
-                StopMonitoring(EXOTIC_PID)
-                if (EXOTIC_DROP)
-                    PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
-                EXOTIC_DROP := false
             }
             WinActivate, ahk_exe destiny2.exe ; make absolutely, positively, certain we are tabbed in
             ; (not remaining=0 means OT L2 not reached. .. or .. not (remaining=40 and index>=20) means chest tracking broken but OT L2 not reached)
@@ -351,7 +346,12 @@ F3:: ; main hotkey that runs the script
                 info_ui.update_content("Relaunching Landing")
                 reload_landing()
             }
-
+            
+            StopMonitoring(EXOTIC_PID)
+            if (EXOTIC_DROP)
+                PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
+            EXOTIC_DROP := false
+            
             ; Run completion
             loop_successful := true
             PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]++
