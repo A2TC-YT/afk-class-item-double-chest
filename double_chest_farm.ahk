@@ -250,6 +250,7 @@ F3:: ; main hotkey that runs the script
     DetectHiddenWindows, On
     WinGet, MainPID, PID, %A_ScriptFullPath% - AutoHotkey v
     ; Start the child scripts
+    ; MsgBox, %A_AhkPath%
     Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "chest", , , CHEST_PID
     Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
     
@@ -1079,6 +1080,9 @@ reload_landing() ; in the name innit
         d2_click(20, 381, 0) ; mouse to drag map and show landing icon
         PreciseSleep(850)
         d2_click(270, 338, 0) ; mouse stop drag and hover landing
+        Sleep, 100
+        Click, Up
+        Sleep, 100
         Click, % DESTINY_X + 270 " " DESTINY_Y + 338 " "
         Click, Down
         Sleep, 1100
@@ -1093,6 +1097,8 @@ reload_landing() ; in the name innit
             if (percent_white >= 0.3)
             {
                 d2_click(295 + landingOffset, 338, 0) ; try clicking a bit to the side
+                Sleep, 100
+                Click, Up
                 Sleep, 100
                 Click, % DESTINY_X + 295 + landingOffset " " DESTINY_Y + 338 " "
                 Click, Down

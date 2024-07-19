@@ -46,6 +46,7 @@ StopMonitoring(wParam, lParam, msg, hwnd) {
 
 CheckChestOpen()
 {
+    WinActivate, Destiny 2
     percent_white := exact_color_check("583|473|34|32", 34, 32, 0xCBE4FF) ; checks for the circle around the interact prompt
     if (percent_white > 0.07)
     {
@@ -57,6 +58,7 @@ CheckChestOpen()
 
 CheckExoticDrop()
 {
+    WinActivate, Destiny 2
     percent_white_1 := exact_color_check("1258|198|20|80", 20, 80, 0xD8BD48) ; check for exotic color on side of screen
     percent_white_2 := exact_color_check("1258|278|20|80", 20, 80, 0xD8BD48)
     percent_white_3 := exact_color_check("1258|358|20|80", 20, 80, 0xD8BD48)
