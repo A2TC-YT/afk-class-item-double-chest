@@ -255,7 +255,7 @@ F3:: ; main hotkey that runs the script
     Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
     
     HEARTBEAT_ON := true
-    ; send_heartbeat()
+    send_heartbeat()
 
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
@@ -1772,11 +1772,12 @@ send_heartbeat() {
 
     try {
         HttpObj := ComObjCreate("MSXML2.XMLHTTP")
-        HttpObj.open("POST", API_URL, false)
-        HttpObj.setRequestHeader("Content-Type", "application/json")
-        HttpObj.send(json)
+        	HttpObj.SetTimeouts(1000, 1000, 1000, 1000) ; Timeout settings: Resolve, Connect, Send, Receive
+        	HttpObj.Open("POST", API_URL, false) ; true for async
+        	HttpObj.SetRequestHeader("Content-Type", "application/json")
+        	HttpObj.Send(json)
+        	response := HttpObj.responseText
 
-        response := HttpObj.responseText
         ; MsgBox, "Sent: " . %json%
 
         if InStr(response, "received")
