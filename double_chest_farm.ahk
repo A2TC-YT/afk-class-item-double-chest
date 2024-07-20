@@ -356,7 +356,7 @@ F3:: ; main hotkey that runs the script
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             update_ui()
 
-            ; send_heartbeat()
+            send_heartbeat()
             
             ; Break out to orbit if Overthrow L2
             if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
@@ -1772,11 +1772,12 @@ send_heartbeat() {
 
     try {
         HttpObj := ComObjCreate("MSXML2.XMLHTTP")
-        HttpObj.open("POST", API_URL, false)
-        HttpObj.setRequestHeader("Content-Type", "application/json")
-        HttpObj.send(json)
+        	HttpObj.SetTimeouts(1000, 1000, 1000, 1000) ; Timeout settings: Resolve, Connect, Send, Receive
+        	HttpObj.Open("POST", API_URL, false) ; true for async
+        	HttpObj.SetRequestHeader("Content-Type", "application/json")
+        	HttpObj.Send(json)
+        	response := HttpObj.responseText
 
-        response := HttpObj.responseText
         ; MsgBox, "Sent: " . %json%
 
         if InStr(response, "received")
