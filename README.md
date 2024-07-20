@@ -34,7 +34,7 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
 - **Bind Settings Key**: Assign to anything, just needs to be assigned
 
 
-![Bindings](images/chest_farm_key_binds.png)
+![Bindings](images/All_Keybinds.png)
 
 ### Display Settings
 - **Window Mode**: Windowed
@@ -57,8 +57,8 @@ Download [Here](https://autohotkey.com/download/1.1/AutoHotkey_1.1.37.02_setup.e
   
 ![Visual Settings](images/chest_farm_additional_video.png)
 - **HUD Opacity**: Set to `Full`
-- **Colorblind Mode**: Off
-- **Reticle Location**: Center
+- **Colorblind Mode**: `Off`
+- **Reticle Location**: `Center`
 
   
 ![Visual Settings](images/chest_farm_gameplay.png)
