@@ -61,8 +61,8 @@ If you like this macro and want to support my work, you can do so on [Ko-Fi](htt
 ## How to Use
 
 1. **Install AutoHotkey**
-   - Make sure you have [AutoHotkey](https://www.autohotkey.com/) installed on your computer. If you don't have it, download and install it from the official website.
-
+   - Make sure you have [AutoHotkey v1.1](https://www.autohotkey.com/download/ahk-install.exe) (not AHK v2) installed on your computer.
+   
 2. **Download the Latest Release**
    - Download the latest release of the macro from the [releases page](https://github.com/A2TC-YT/afk-class-item-double-chest/releases/latest). Once downloaded, unzip the file to a folder of your choice.
 
