@@ -13,7 +13,7 @@ SetMouseDelay, -1
 OnMessage(0x1003, "on_chest_open")
 OnMessage(0x1004, "on_exotic_drop")
 OnExit("on_script_exit")
-global VERSION := "2.0.0"
+global VERSION := "2.0.1b"
 
 ; Startup Checks
 ; =================================== ;
@@ -255,7 +255,7 @@ F3:: ; main hotkey that runs the script
     Run, %A_AhkPath% "monitor_loot.ahk" %MainPID% "exotic", , , EXOTIC_PID
     
     HEARTBEAT_ON := true
-    ; send_heartbeat()
+    send_heartbeat()
 
     info_ui.update_content("Starting chest farm")
     WinActivate, ahk_exe destiny2.exe ; make sure destiny is active window
@@ -279,8 +279,10 @@ F3:: ; main hotkey that runs the script
     total_time_afk_ui.add_time(compute_total_stat("time"), false)
     info_ui.update_content("Loading in")
     Sleep, 15000 
-    loop, ; Orbit loop
+
+        loop, ; Orbit loop
     {
+        remaining_runs := 20 ; Initialize the remaining runs counter
         remaining_chests := 40 ; use this to know how many loops to do before we reach overthrow level 2
         runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
         loop, ; Run landing loop (break out of this if overthrow L2)
@@ -352,6 +354,9 @@ F3:: ; main hotkey that runs the script
             PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_runs"]++
             PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_time"] += A_TickCount - CURRENT_LOOP_START_TIME
 
+            ; Decrease the remaining runs counter
+            remaining_runs--
+
             ; UI updates
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             update_ui()
@@ -360,6 +365,9 @@ F3:: ; main hotkey that runs the script
             
             ; Break out to orbit if Overthrow L2
             if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
+                break
+            ; Also break out if runs = 20 as fallback for not tracking chests
+            if (remaining_runs <= 0)
                 break
         }
         info_ui.update_content("Orbit and relaunch") ; opened 40 chests, time to orbit and relaunch
@@ -375,6 +383,9 @@ F3:: ; main hotkey that runs the script
             Sleep, 500
         }
         Sleep, 30000
+
+        ; Reset remaining runs for next orbit loop
+        remaining_runs := 20
         
         ; Keep the user's heartbeat alive as orbit_landing takes more time than a normal loop.
         send_heartbeat()
@@ -584,16 +595,16 @@ group_4_chests(chest_number) ; picks up chests 16-20
     PreciseSleep(100)
     Send, % "{" key_binds["move_forward"] " Down}"
     Send, % "{" key_binds["toggle_sprint"] " Down}"
-    PreciseSleep(2400)
-    Send, % "{" key_binds["toggle_sprint"] " Up}"
-    Send, % "{" key_binds["move_forward"] " Up}"
-    PreciseSleep(200)
-
+    PreciseSleep(1200)
     ; Stop exotic tracking and record the previous.
     StopMonitoring(EXOTIC_PID)
     if (EXOTIC_DROP)
         PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
     EXOTIC_DROP := false
+    PreciseSleep(1200)
+    Send, % "{" key_binds["toggle_sprint"] " Up}"
+    Send, % "{" key_binds["move_forward"] " Up}"
+    PreciseSleep(200)
 
     if (chest_number == 20)
     {
@@ -616,7 +627,6 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2210)
@@ -624,6 +634,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 500)
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else if (CURRENT_GUARDIAN == "Warlock")
@@ -639,7 +650,6 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2400)
@@ -647,6 +657,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 450)
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else 
@@ -664,7 +675,6 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(100)
             Send, % "{" key_binds["toggle_sprint"] " Down}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["heavy_weapon"] "}"
             PreciseSleep(2350)
@@ -672,6 +682,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             Send, % "{" key_binds["move_forward"] " Up}"
             DllCall("mouse_event", uint, 1, int, 130, int, 450)
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
     }
@@ -699,10 +710,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1250)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else if (CURRENT_GUARDIAN == "Warlock")
@@ -721,10 +732,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(900)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else
@@ -743,10 +754,10 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1055)
             Send, % "{" key_binds["toggle_sprint"] " Up}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
     }
@@ -771,7 +782,6 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(600)
             Send, % "{" key_binds["jump"] " Up}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
             Send, % "{" key_binds["heavy_weapon"] "}"
@@ -779,6 +789,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else if (CURRENT_GUARDIAN == "Warlock")
@@ -794,7 +805,6 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1600)
             Send, % "{" key_binds["jump"] "}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
             Send, % "{" key_binds["heavy_weapon"] "}"
@@ -802,6 +812,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
         else 
@@ -817,7 +828,6 @@ group_4_chests(chest_number) ; picks up chests 16-20
             PreciseSleep(1600)
             Send, % "{" key_binds["jump"] "}"
             StartMonitoring(CHEST_PID)
-            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Down}"
             DllCall("mouse_event", uint, 1, int, -80, int, 250)
             Send, % "{" key_binds["heavy_weapon"] "}"
@@ -825,6 +835,7 @@ group_4_chests(chest_number) ; picks up chests 16-20
             DllCall("mouse_event", uint, 1, int, 130, int, 250)
             Send, % "{" key_binds["move_forward"] " Up}"
             PreciseSleep(1300)
+            StartMonitoring(EXOTIC_PID)
             Send, % "{" key_binds["interact"] " Up}"
         }
     }
@@ -839,11 +850,11 @@ group_4_chests(chest_number) ; picks up chests 16-20
         PreciseSleep(2800)
         Send, % "{" key_binds["interact"] " Down}"
         StartMonitoring(CHEST_PID)
-        StartMonitoring(EXOTIC_PID)
         Send, % "{" key_binds["heavy_weapon"] "}"
         PreciseSleep(2420)
         Send, % "{" key_binds["move_forward"] " Up}"
         PreciseSleep(1300)
+        StartMonitoring(EXOTIC_PID)
         Send, % "{" key_binds["interact"] " Up}"
     }
     else if (chest_number == 16)
@@ -859,13 +870,13 @@ group_4_chests(chest_number) ; picks up chests 16-20
         PreciseSleep(4200)
         Send, % "{" key_binds["interact"] " Down}"
         StartMonitoring(CHEST_PID)
-        StartMonitoring(EXOTIC_PID)
         DllCall("mouse_event", uint, 1, int, 610, int, 50)
         Send, % "{" key_binds["heavy_weapon"] "}"
         PreciseSleep(1450)
         Send, % "{" key_binds["move_forward"] " Up}"
         DllCall("mouse_event", uint, 1, int, -100, int, 50)
         PreciseSleep(1300)
+        StartMonitoring(EXOTIC_PID)
         Send, % "{" key_binds["interact"] " Up}"
     }
     if (CHEST_OPENED)
