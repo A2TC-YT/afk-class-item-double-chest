@@ -40,10 +40,10 @@ StartMonitoring(wParam, lParam, msg, hwnd) {
 
     if (task = "chest") {
         CheckChestOpen()
-        SetTimer, CheckChestOpen, 50
+        SetTimer, CheckChestOpen, 100
     } else if (task = "exotic") {
         CheckExoticDrop()
-        SetTimer, CheckExoticDrop, 50
+        SetTimer, CheckExoticDrop, 200
     }
 }
 
@@ -59,11 +59,16 @@ StopMonitoring(wParam, lParam, msg, hwnd) {
 CheckChestOpen()
 {
     ; WinActivate, Destiny 2
-    percent_white := exact_color_check("583|473|34|32", 34, 32, 0xCBE4FF) ; checks for the circle around the interact prompt
-    if (percent_white > 0.07)
-    {
-        PostMessage, 0x1003, 0, 0, , % "ahk_pid " main_pid
-        SetTimer, CheckChestOpen, Off
+    colors := [0xCBE4FF, 0xCCE4FF, 0xCDE6FF, 0xCCE5FF, 0xCCE6FF, 0xCDE4FF, 0xCCE7FF, 0xCBE5FF, 0xCBE6FF]
+    x := colors.MaxIndex()
+    loop, %x%
+	{	
+    	percent_white := exact_color_check("583|473|34|32", 34, 32, colors[A_Index]) ; checks for the circle around the interact prompt
+    	if (percent_white > 0.01)
+    	{
+        	PostMessage, 0x1003, 0, 0, , % "ahk_pid " main_pid
+        	SetTimer, CheckChestOpen, Off
+    	}
     }
     Return
 }
