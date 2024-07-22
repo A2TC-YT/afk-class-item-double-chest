@@ -401,6 +401,8 @@ F4:: ; reload the script, release any possible held keys, save stats
 
 F5:: ; same thing but close the script
 {
+    for key, value in key_binds 
+          send, % "{" value " Up}"
     ExitApp
 }
 
