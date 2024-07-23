@@ -13,7 +13,7 @@ SetMouseDelay, -1
 OnMessage(0x1003, "on_chest_open")
 OnMessage(0x1004, "on_exotic_drop")
 OnExit("on_script_exit")
-global VERSION := "2.0.1"
+global VERSION := "2.0.2"
 
 ; Startup Checks
 ; =================================== ;
@@ -1784,12 +1784,12 @@ send_heartbeat() {
     json .= "}"
 
     try {
-        HttpObj := ComObjCreate("MSXML2.XMLHTTP")
-        	HttpObj.SetTimeouts(1000, 1000, 1000, 1000) ; Timeout settings: Resolve, Connect, Send, Receive
-        	HttpObj.Open("POST", API_URL, false) ; true for async
-        	HttpObj.SetRequestHeader("Content-Type", "application/json")
-        	HttpObj.Send(json)
-        	response := HttpObj.responseText
+        HttpObj := ComObjCreate("MSXML2.ServerXMLHTTP.6.0")
+        HttpObj.SetTimeouts(1000, 1000, 1000, 1000) ; Timeout settings: Resolve, Connect, Send, Receive
+        HttpObj.Open("POST", API_URL, false) ; true for async
+        HttpObj.SetRequestHeader("Content-Type", "application/json")
+        HttpObj.Send(json)
+        response := HttpObj.responseText
 
         ; MsgBox, "Sent: " . %json%
 
