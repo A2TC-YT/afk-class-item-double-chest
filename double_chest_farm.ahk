@@ -1191,15 +1191,27 @@ change_character(slot := "")
         d2_click(900, 304, 0)
         Sleep, 100
         d2_click(900, 304)
+        Sleep, 400
+        d2_click(900, 304, 0)
+        Sleep, 100
+        d2_click(900, 304)
     }
     else if (slot == "Middle")
     {
         d2_click(885, 379, 0)
         Sleep, 100
         d2_click(885, 379)
+        Sleep, 400
+        d2_click(885, 379, 0)
+        Sleep, 100
+        d2_click(885, 379)
     }
     else if (slot == "Bottom")
     {
+        d2_click(902, 448, 0)
+        Sleep, 100
+        d2_click(902, 448)
+        Sleep, 400
         d2_click(902, 448, 0)
         Sleep, 100
         d2_click(902, 448)
