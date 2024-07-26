@@ -1555,7 +1555,11 @@ format_timestamp(timestamp, show_hours, show_minutes, show_seconds, show_ms, rou
 
 get_d2_keybinds(k) ; very readable function that parses destiny 2 cvars file for keybinds
 {
-    FileRead, f, % A_AppData "\Bungie\DestinyPC\prefs\cvars.xml"
+    if FileExist(A_AppData "\Bungie\DestinyPC\prefs\cvars.xml")
+        FileRead, f, % A_AppData "\Bungie\DestinyPC\prefs\cvars.xml"
+    else
+        FileRead, f, C:\Program Files (x86)\Steam\steamapps\common\Destiny 2\prefs\cvars.xml
+
     if ErrorLevel 
         return False
     b := {}, t := {"shift": "LShift", "control": "LCtrl", "alt": "LAlt", "menu": "AppsKey", "insert": "Ins", "delete": "Del", "pageup": "PgUp", "pagedown": "PgDn", "keypad`/": "NumpadDiv", "keypad`*": "NumpadMult", "keypad`-": "NumpadSub", "keypad`+": "NumpadAdd", "keypadenter": "NumpadEnter", "leftmousebutton": "LButton", "middlemousebutton": "MButton", "rightmousebutton": "RButton", "extramousebutton1": "XButton1", "extramousebutton2": "XButton2", "mousewheelup": "WheelUp", "mousewheeldown": "WheelDown", "escape": "Esc"}
