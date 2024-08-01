@@ -335,15 +335,7 @@ F3:: ; main hotkey that runs the script
                 }
                 update_chest_ui()
             }
-            WinActivate, ahk_exe destiny2.exe ; make absolutely, positively, certain we are tabbed in
-            ; (not remaining=0 means OT L2 not reached. .. or .. not (remaining=40 and index>=20) means chest tracking broken but OT L2 not reached)
-            ; both conditions mean we do not have to orbit. simply reload.
-            if (!(remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20)))
-            {
-                info_ui.update_content("Relaunching Landing")
-                reload_landing()
-            }
-            
+
             StopMonitoring(EXOTIC_PID)
             if (EXOTIC_DROP)
                 PLAYER_DATA[CURRENT_GUARDIAN]["ClassStats"]["current_exotics"]++
@@ -357,6 +349,18 @@ F3:: ; main hotkey that runs the script
             ; Decrease the remaining runs counter
             remaining_runs--
 
+
+            WinActivate, ahk_exe destiny2.exe ; make absolutely, positively, certain we are tabbed in
+            ; (not remaining=0 means OT L2 not reached. .. or .. not (remaining=40 and index>=20) means chest tracking broken but OT L2 not reached)
+            needs_orbit := (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
+
+            ; both conditions mean we do not have to orbit. simply reload.
+            if (!(needs_orbit || remaining_runs <= 0))
+            {
+                info_ui.update_content("Relaunching Landing")
+                reload_landing()
+            }
+            
             ; UI updates
             runs_till_orbit_ui.update_content("Runs till next orbit - " Ceil(remaining_chests/2))
             update_ui()
@@ -364,7 +368,7 @@ F3:: ; main hotkey that runs the script
             send_heartbeat()
             
             ; Break out to orbit if Overthrow L2
-            if (remaining_chests <= 0 || (remaining_chests == 40 && A_Index >= 20))
+            if (needs_orbit)
                 break
             ; Also break out if runs = 20 as fallback for not tracking chests
             if (remaining_runs <= 0)
@@ -575,10 +579,9 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     Send, % "{" key_binds["interact"] " Down}"
     PreciseSleep(1100)
     Send, % "{" key_binds["interact"] " Up}"
+    StopMonitoring(CHEST_PID)
     if (CHEST_OPENED)
         group_5_chest_opened := true
-    else 
-        StopMonitoring(CHEST_PID)
     CHEST_OPENED := false
     DllCall("mouse_event", uint, 1, int, -4400, int, -500)
     return group_5_chest_opened
@@ -881,10 +884,9 @@ group_4_chests(chest_number) ; picks up chests 16-20
         StartMonitoring(EXOTIC_PID)
         Send, % "{" key_binds["interact"] " Up}"
     }
+    StopMonitoring(CHEST_PID)
     if (CHEST_OPENED)
         group_4_chest_opened := true
-    else 
-        StopMonitoring(CHEST_PID)
     CHEST_OPENED := false
     return group_4_chest_opened
 }

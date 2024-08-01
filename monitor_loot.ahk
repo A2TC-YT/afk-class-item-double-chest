@@ -66,8 +66,8 @@ CheckChestOpen()
     	percent_white := exact_color_check("583|473|34|32", 34, 32, colors[A_Index]) ; checks for the circle around the interact prompt
     	if (percent_white > 0.01)
     	{
-        	PostMessage, 0x1003, 0, 0, , % "ahk_pid " main_pid
-        	SetTimer, CheckChestOpen, Off
+            SetTimer, CheckChestOpen, Off
+            PostMessage, 0x1003, 0, 0, , % "ahk_pid " main_pid
     	}
     }
     Return
@@ -82,8 +82,8 @@ CheckExoticDrop()
     pct_exotic_4 := exact_color_check("1258|438|20|80", 20, 80, 0xD8BD48)
     if (pct_exotic_1 > 0.01 || pct_exotic_2 > 0.01 || pct_exotic_3 > 0.01 || pct_exotic_4 > 0.01)
     {
-        PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
         SetTimer, CheckExoticDrop, Off
+        PostMessage, 0x1004, 0, 0, , % "ahk_pid " main_pid
     }
     Return
 }
