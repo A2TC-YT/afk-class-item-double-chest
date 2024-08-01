@@ -579,10 +579,9 @@ group_5_chests(chest_number:=21) ; picks up chest 21
     Send, % "{" key_binds["interact"] " Down}"
     PreciseSleep(1100)
     Send, % "{" key_binds["interact"] " Up}"
+    StopMonitoring(CHEST_PID)
     if (CHEST_OPENED)
         group_5_chest_opened := true
-    else 
-        StopMonitoring(CHEST_PID)
     CHEST_OPENED := false
     DllCall("mouse_event", uint, 1, int, -4400, int, -500)
     return group_5_chest_opened
@@ -885,10 +884,9 @@ group_4_chests(chest_number) ; picks up chests 16-20
         StartMonitoring(EXOTIC_PID)
         Send, % "{" key_binds["interact"] " Up}"
     }
+    StopMonitoring(CHEST_PID)
     if (CHEST_OPENED)
         group_4_chest_opened := true
-    else 
-        StopMonitoring(CHEST_PID)
     CHEST_OPENED := false
     return group_4_chest_opened
 }
